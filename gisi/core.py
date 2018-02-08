@@ -5,7 +5,7 @@ from datetime import timedelta
 from discord import Embed
 from discord.ext.commands import command
 
-from .constants import Colours
+from .constants import Colours, Sources
 from .signals import GisiSignal
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class Core:
         em.add_field(name="WS ping", value=f"{round(1000 * self.bot.latency, 2)}ms")
         uptime = timedelta(seconds=round(self.bot.uptime))
         em.add_field(name="Uptime", value=f"{uptime}")
-        em.set_thumbnail(url="https://ih0.redbubble.net/image.192352938.2171/flat,800x800,075,f.u1.jpg")
+        em.set_thumbnail(url=Sources.GISI_AVATAR)
 
         pre = time.time()
         await ctx.message.edit(embed=em)

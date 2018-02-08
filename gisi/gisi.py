@@ -10,12 +10,17 @@ from discord.ext.commands import AutoShardedBot, CommandInvokeError
 
 from . import utils
 from .config import Config
-from .constants import FileLocations, Colours
+from .constants import Colours, FileLocations
 from .core import Core
 from .signals import GisiSignal
 from .utils import WebDriver
 
 log = logging.getLogger(__name__)
+
+
+async def before_invoke(ctx):
+        pre = len(ctx.prefix + ctx.invoked_with)
+        ctx.clean_content = ctx.message.content[pre:].strip()
 
 
 class Gisi(AutoShardedBot):
@@ -26,6 +31,8 @@ class Gisi(AutoShardedBot):
 
         self._signal = None
         self.start_at = time.time()
+
+        self._before_invoke = before_invoke
 
         self.aiosession = ClientSession()
         self.webdriver = WebDriver(kill_on_exit=False)
@@ -71,7 +78,6 @@ class Gisi(AutoShardedBot):
     async def run(self):
         return await self.start(self.config.token, bot=False)
 
-
     async def on_ready(self):
         await self.webdriver.spawn()
         log.info("ready!")
@@ -80,6 +86,9 @@ class Gisi(AutoShardedBot):
         log.debug("closing stuff")
         self.aiosession.close()
         self.webdriver.close()
+
+    async def on_command(self, ctx):
+        log.info(f"triggered command {ctx.command}")
 
     async def on_error(self, event_method, *args, **kwargs):
         log.exception("Client error")
@@ -104,7 +113,7 @@ class Gisi(AutoShardedBot):
             args = "\n".join([f"{arg}" for arg in context.args])
             kwargs = "\n".join([f"{key}: {value}" for key, value in context.kwargs.items()])
             ctx_em.add_field(name="Command",
-                             value=f"name: **{context.command.name}**\nArgs:```\n{args}```\nKwargs:```\n{kwargs}```",
+                             value=f"name: **{context.command.name if context.command else context.command}**\nArgs:```\n{args}```\nKwargs:```\n{kwargs}```",
                              inline=False)
 
             if isinstance(exception, CommandInvokeError):

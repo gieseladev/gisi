@@ -12,3 +12,6 @@ class Colours:
     ERROR = 0xFF4F48
 
     INFO = 0x4EFFA3
+
+class Sources:
+    GISI_AVATAR = "https://i.imgur.com/Z8VX9CN.png"

@@ -1,7 +1,7 @@
 import xmltodict
 from aiohttp import ClientSession
-from discord.ext.commands import command
 from discord import Embed
+from discord.ext.commands import command
 
 from gisi import SetDefaults
 
@@ -19,9 +19,11 @@ class WolframAlpha:
     @command()
     async def ask(self, ctx, query):
         doc = await self.wolfram_client.query(query)
-        em = Embed(title=doc.pods[0].title)
-        em.set_image(url=doc.pods[0].subpod.img.src)
-        await ctx.message.edit(embed=em)
+        for index, pod in enumerate(doc.pods):
+            em = Embed(title=pod.title, description=pod.subpod.text, colour=0xFFCAC3)
+            em.set_image(url=pod.subpod.img.src)
+            em.set_footer(text=f"Pod {index + 1}/{len(doc.pods)}", icon_url="https://software.duke.edu/sites/default/files/logo-wolfram-alpha-150x150.png")
+            await ctx.send(embed=em)
 
 
 def setup(bot):
@@ -134,6 +136,7 @@ class SubPod:
             "img": Img.parse(data["img"])
         }
         return cls(**kwargs)
+
 
 class Img:
     def __init__(self, src, alt, title, width, height):

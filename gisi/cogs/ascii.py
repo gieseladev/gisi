@@ -27,10 +27,8 @@ class ASCII:
     @command()
     async def asciify(self, ctx):
         msg = ctx.message
-        pre = len(ctx.prefix + ctx.invoked_with)
-        raw_content = msg.content[pre:]
 
-        new_content = self.asciiemojify(raw_content, require_wrapping=False)
+        new_content = self.asciiemojify(ctx.clean_content, require_wrapping=False)
         if new_content != msg.content:
             await msg.edit(content=new_content)
 
