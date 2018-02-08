@@ -1,2 +1,7 @@
 cd ..
-cmd /k "venv\scripts\activate && run.py"
+call venv\scripts\activate
+:run
+echo STARTING
+run.py
+goto run
+pause

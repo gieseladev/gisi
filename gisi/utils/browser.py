@@ -69,6 +69,7 @@ class WebDriver:
             log.debug(f"spawned driver {self.driver}")
 
     def close(self):
+        log.debug(f"killed driver {self.driver}")
         self.driver.close()
 
     @run_in_executor

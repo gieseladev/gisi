@@ -16,7 +16,7 @@ class Defaults:
 def SetDefaults(defaults: dict):
     for key, value in defaults.items():
         setattr(Defaults, key, value)
-    log.debug(f"added {len(defaults)} settings to default config")
+    log.debug(f"added {len(defaults)} setting(s) to default config")
 
 
 class Config:

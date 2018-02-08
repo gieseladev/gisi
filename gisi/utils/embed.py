@@ -2,6 +2,7 @@ import traceback
 from os import path
 
 from discord import Embed
+from gisi.constants import Colours
 
 
 def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
@@ -15,5 +16,5 @@ def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
             filepath = filename
         tb.append(f"{func_name} (line {line_num} in {filepath})\n{text}")
     formatted_tb = "\n\n".join(tb)
-    return Embed(title="Exception Info", colour=0xFF4F48,
+    return Embed(title="Exception Info", colour=Colours.ERROR,
                  description=f"type: **{exc_type}**\nmessage:```\n{exc_msg}```\n\ntraceback:```\n{formatted_tb}```")

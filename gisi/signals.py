@@ -1,10 +1,5 @@
-class GisiSignal(BaseException):
-    pass
+from enum import IntEnum
 
-
-class ShutdownSignal(GisiSignal):
-    pass
-
-
-class RestartSignal(GisiSignal):
-    pass
+class GisiSignal(IntEnum):
+    SHUTDOWN = 1
+    RESTART = 2

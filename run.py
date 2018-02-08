@@ -1,5 +1,4 @@
 import asyncio
-import os
 import json
 import logging
 import logging.config
@@ -25,17 +24,15 @@ def main():
         try:
             g = gisi.Gisi()
             loop.run_until_complete(g.run())
-            break
-        except gisi.ShutdownSignal:
-            log.warning("shut down")
-            break
-        except gisi.RestartSignal:
-            log.warning("restarting...")
+            if g._signal:
+                if g._signal == gisi.GisiSignal.SHUTDOWN:
+                    break
+            else:
+                log.info("No signal found... Restarting!")
         except BaseException as e:
             raise
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
     log.warning("exiting!")
+    loop.stop()
     loop.close()
 
 
