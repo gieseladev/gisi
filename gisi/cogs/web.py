@@ -36,7 +36,8 @@ class Web:
         im.save(imdata, "png")
         imdata.seek(0)
         file = File(imdata, f"{title}.png")
-        await ctx.message.edit(content=f"{title} (<{url}>):", file=file)
+        await ctx.send(f"{title} (<{url}>):", file=file)
+        await ctx.message.delete()
 
 
 def setup(bot):

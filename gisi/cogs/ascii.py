@@ -22,8 +22,12 @@ class ASCII:
 
     def asciiemojify(self, text, require_wrapping=True):
         prog = r"(?<!\\)-(\w+)-" if require_wrapping else r"(\w+)"
-        return re.sub(prog, lambda m: text_utils.escape(self.get_asciimoji(m.group(1).lower())) or m.group(0),
-                      text)
+
+        def repl(m):
+            emoji = self.get_asciimoji(m.group(1).lower())
+            return text_utils.escape(emoji) if emoji else m.group(0)
+
+        return re.sub(prog, repl, text)
 
     @command()
     async def asciify(self, ctx):
@@ -42,6 +46,8 @@ class ASCII:
                 await message.edit(content=new_content)
 
     async def on_message_edit(self, before, after):
+        if after.author != self.bot.user:
+            return
         if self.bot.config.ascii_enabled:
             new_content = self.asciiemojify(after.content)
             if new_content != after.content:
