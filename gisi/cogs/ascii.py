@@ -4,6 +4,7 @@ import re
 from discord.ext.commands import command
 
 from gisi import SetDefaults
+from gisi.utils import text_utils
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class ASCII:
 
     def asciiemojify(self, text, require_wrapping=True):
         prog = r"(?<!\\)-(\w+)-" if require_wrapping else r"(\w+)"
-        return re.sub(prog, lambda m: self.get_asciimoji(m.group(1).lower()) or m.group(0),
+        return re.sub(prog, lambda m: text_utils.escape(self.get_asciimoji(m.group(1).lower())) or m.group(0),
                       text)
 
     @command()
