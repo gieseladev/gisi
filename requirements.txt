@@ -1,8 +1,9 @@
 aiohttp
+cchardet
+aiodns
 colorlog
 Pillow
 selenium
 validators
-xmltodict
 
 https://github.com/Rapptz/discord.py/archive/rewrite.zip

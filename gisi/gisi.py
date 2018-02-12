@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 async def before_invoke(ctx):
         pre = len(ctx.prefix + ctx.invoked_with)
         ctx.clean_content = ctx.message.content[pre:].strip()
+        ctx.invocation_content = ctx.message.content[:pre]
 
 
 class Gisi(AutoShardedBot):

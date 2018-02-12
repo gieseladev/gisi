@@ -1,14 +1,17 @@
 import asyncio
+import colorsys
+import logging
 from io import BytesIO
 
-import xmltodict
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageStat
 from aiohttp import ClientSession
 from discord import File
 from discord.ext.commands import command
-from gisi.utils import chunks
 
 from gisi import SetDefaults
+from gisi.utils import chunks, extract_keys
+
+log = logging.getLogger(__name__)
 
 SetDefaults({
     "wolfram_app_id": "EH8PUT-35T4RK4AVL"
@@ -22,17 +25,32 @@ class WolframAlpha:
         self.wolfram_client = Client(self.bot.config.wolfram_app_id, aiosession=self.aiosession)
 
     @command()
-    async def ask(self, ctx, query):
+    async def ask(self, ctx, *query):
+        query = " ".join(query)
+        content = f"{ctx.invocation_content} `{ctx.clean_content}`"
+        await ctx.message.edit(content=f"{content} (processing...)")
         doc = await self.wolfram_client.query(query)
+        if not doc:
+            await ctx.message.edit(content=f"{content} **No Results found!**")
+            return
+
+        await ctx.message.edit(content=f"{content} (generating image...)")
         imgs = await doc.create_images(self.aiosession)
+        await ctx.message.edit(content=f"{content} (processing image...)")
         files = []
         for n, im in enumerate(imgs):
             im_data = BytesIO()
             im.save(im_data, "PNG")
             im_data.seek(0)
             files.append(File(im_data, f"result_{n}.png"))
-        for file_chunk in chunks(files, 10):
+        cs = chunks(files, 10)
+        uploaded = 0
+        for file_chunk in cs:
+            await ctx.message.edit(
+                content=f"{content} (uploading image(s)... [{len(file_chunk) + uploaded}/{len(files)}])")
             await ctx.send(files=file_chunk)
+            uploaded += len(file_chunk)
+        await ctx.message.edit(content=f"{content} (done!)")
 
 
 def setup(bot):
@@ -57,16 +75,23 @@ class Client:
     async def query(self, query):
         params = {
             "input": query,
-            "appid": self.app_id
+            "mag": str(1.5),
+            "appid": self.app_id,
+            "output": "json"
         }
         async with self.aiosession.get(self.QUERY_ENDPOINT, params=params) as resp:
-            raw_xml = await resp.text()
-        data = xmltodict.parse(raw_xml)["queryresult"]
-        return Document.parse(data)
+            # Wolfram doesn't return the correct content type so please ignore it, kthx
+            data = await resp.json(content_type=None)
+        return Document.parse(query, data["queryresult"])
+
+
+class WolframError(Exception):
+    pass
 
 
 class Document:
-    def __init__(self, pods, assumptions, **kwargs):
+    def __init__(self, query, pods, assumptions, **kwargs):
+        self.query = query
         self.pods = pods
         self.assumptions = assumptions
 
@@ -80,16 +105,21 @@ class Document:
         return iter(self.pods)
 
     @classmethod
-    def parse(cls, data):
+    def parse(cls, query, data):
+        if data["error"]:
+            raise WolframError(data["error"])
+        if not data["success"]:
+            log.info(f"couldn't find anything for \"{query}\"")
+            log.debug(data)
+            return None
         pods = []
-        for raw_pod in data["pod"]:
+        for raw_pod in data["pods"]:
             pods.append(Pod.parse(raw_pod))
         kwargs = {
-            "success": bool(["false", "true"].index(data["@success"])),
             "pods": pods,
-            "assumptions": data["assumptions"]
+            "assumptions": data.get("assumptions", [])
         }
-        return cls(**kwargs)
+        return cls(query, **kwargs)
 
     async def get_images(self, session):
         tasks = []
@@ -99,6 +129,8 @@ class Document:
         return [im for pod_imgs in images for im in pod_imgs]
 
     async def create_images(self, session):
+        min_saturation_for_colour = .175
+
         max_height_per_image = 750
         horizontal_padding = 20
         vertical_padding = 40
@@ -111,7 +143,7 @@ class Document:
 
         width = max_width + horizontal_padding
 
-        doc_im = Image.new("RGBA", (width, max_height_per_image), (35, 39, 42))
+        doc_im = Image.new("RGB", (width, max_height_per_image), (35, 39, 42))
         doc_draw = ImageDraw.Draw(doc_im)
 
         x = horizontal_padding // 2
@@ -125,7 +157,7 @@ class Document:
             doc_im = doc_im.crop((0, 0, current_max_width, y - after_image_padding + vertical_padding // 2))
             final_images.append(doc_im)
 
-            doc_im = Image.new("RGBA", (width, max_height_per_image), (35, 39, 42))
+            doc_im = Image.new("RGB", (width, max_height_per_image), (35, 39, 42))
             doc_draw = ImageDraw.Draw(doc_im)
             x = horizontal_padding // 2
             current_max_width = horizontal_padding
@@ -138,6 +170,19 @@ class Document:
                 text = pod.title
                 text_size = doc_draw.textsize(text, doc_font)
 
+                if text_size[0] + horizontal_padding > max_width:
+                    lines = []
+                    current_line = ""
+                    for word in text.split():
+                        current_line += f" {word}"
+                        text_width = doc_draw.textsize(current_line, doc_font)[0]
+                        if text_width + horizontal_padding >= max_width:
+                            lines.append(current_line.strip())
+                            current_line = word
+                    lines.append(current_line.strip())
+                    text = "\n".join(lines).strip()
+                    text_size = doc_draw.textsize(text, doc_font)
+
                 height = text_size[1] + after_text_padding + im.height + vertical_padding // 2
                 if y + height > max_height_per_image:
                     finalise_image()
@@ -149,7 +194,10 @@ class Document:
                 doc_draw.text((x, y), text, (114, 137, 218), doc_font)
                 y += text_size[1] + after_text_padding
 
-                im = ImageOps.colorize(im.convert("L"), (255, 255, 255), (44, 47, 51))
+                stat = ImageStat.Stat(im.convert("RGB"))
+                hsv = colorsys.rgb_to_hsv(*map(lambda v: v / 255, stat.median))
+                if hsv[1] < min_saturation_for_colour:
+                    im = ImageOps.colorize(im.convert("L"), (255, 255, 255), (44, 47, 51))
                 doc_im.paste(im, box=(x, y))
                 y += im.height + after_image_padding
 
@@ -158,12 +206,13 @@ class Document:
 
 
 class Pod:
-    def __init__(self, title, scanner, _id, position, subpods):
+    def __init__(self, title, scanner, id, position, error, subpods, states=None):
         self.title = title
         self.scanner = scanner
-        self.id = _id
+        self.id = id
         self.position = position
         self.subpods = subpods
+        self.states = states
 
     def __str__(self):
         return f"<Pod {self.title} {self.id}>"
@@ -177,19 +226,11 @@ class Pod:
 
     @classmethod
     def parse(cls, data):
-        subpods = []
-        if isinstance(data["subpod"], list):
-            for raw_subpod in data["subpod"]:
-                subpods.append(SubPod.parse(raw_subpod))
-        else:
-            subpods = [SubPod.parse(data["subpod"])]
-        kwargs = {
-            "title": data["@title"],
-            "scanner": data["@scanner"],
-            "_id": data["@id"],
-            "position": int(data["@position"]),
+        kwargs = extract_keys(data, "title", "scanner", "id", "position", "error", "subpods")
+        subpods = [SubPod.parse(raw_subpod) for raw_subpod in data["subpods"]]
+        kwargs.update({
             "subpods": subpods
-        }
+        })
         return cls(**kwargs)
 
     async def get_images(self, session):
@@ -200,21 +241,24 @@ class Pod:
 
 
 class SubPod:
-    def __init__(self, title, text, img):
+    def __init__(self, title, text, img, imagesource=None, nodata=False, states=None):
         self.title = title
         self.text = text
         self.img = img
+        self.imagesource = imagesource
+        self.nodata = nodata
+        self.states = states
 
     def __str__(self):
         return f"<SubPod {self.title}>"
 
     @classmethod
     def parse(cls, data):
-        kwargs = {
-            "title": data["@title"],
-            "text": data["plaintext"],
-            "img": Img.parse(data["img"])
-        }
+        kwargs = data
+        kwargs.update({
+            "img": Img.parse(kwargs["img"]),
+            "text": kwargs.pop("plaintext")
+        })
         return cls(**kwargs)
 
     async def get_image(self, session):
@@ -236,14 +280,7 @@ class Img:
 
     @classmethod
     def parse(cls, data):
-        kwargs = {
-            "src": data["@src"],
-            "alt": data["@alt"],
-            "title": data["@title"],
-            "width": data["@width"],
-            "height": data["@height"],
-        }
-        return cls(**kwargs)
+        return cls(**data)
 
     async def get_image(self, session):
         if not self._image:
