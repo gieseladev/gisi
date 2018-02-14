@@ -25,9 +25,8 @@ class WolframAlpha:
         self.wolfram_client = Client(self.bot.config.wolfram_app_id, aiosession=self.aiosession)
 
     @command()
-    async def ask(self, ctx, *query):
-        query = " ".join(query)
-        content = f"{ctx.invocation_content} `{ctx.clean_content}`"
+    async def ask(self, ctx, *, query):
+        content = f"{ctx.invocation_content} `{query}`"
         await ctx.message.edit(content=f"{content} (processing...)")
         doc = await self.wolfram_client.query(query)
         if not doc:
@@ -241,7 +240,7 @@ class Pod:
 
 
 class SubPod:
-    def __init__(self, title, text, img, imagesource=None, nodata=False, states=None):
+    def __init__(self, title, text, img, imagesource=None, nodata=False, states=None, **kwargs):
         self.title = title
         self.text = text
         self.img = img

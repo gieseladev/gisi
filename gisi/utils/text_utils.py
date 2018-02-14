@@ -2,7 +2,8 @@
 
 from functools import partial
 
-DISCORD_FORMATTING_CHARS = {"*", "_", "~", "`", "\\"}
+# : is used for urls
+DISCORD_FORMATTING_CHARS = {"*", "_", "~", "`", "\\", ":"}
 BOLD_SEQ = "**"
 ITALIC_SEQ = "*"
 STRIKETHROUGH_SEQ = "~~"
@@ -41,3 +42,16 @@ def escape(s):
             res += ESCAPE_CHAR
         res += c
     return res
+
+
+def fit_sentences(text, max_length=None, max_sentences=None, at_least_one=True):
+    sentences = text.split(".")
+    new_sentences = [sentences.pop(0)] if at_least_one else []
+    for sentence in sentences:
+        if max_sentences and len(new_sentences) >= max_sentences:
+            break
+        if max_length and len(".".join(new_sentences)) + len(sentence) + 1 > max_length:
+            break
+        new_sentences.append(sentence)
+
+    return ".".join(new_sentences) + "."

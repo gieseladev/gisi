@@ -19,9 +19,12 @@ log = logging.getLogger(__name__)
 
 
 async def before_invoke(ctx):
-        pre = len(ctx.prefix + ctx.invoked_with)
-        ctx.clean_content = ctx.message.content[pre:].strip()
-        ctx.invocation_content = ctx.message.content[:pre]
+    pre = len(ctx.prefix + ctx.invoked_with)
+    if ctx.invoked_subcommand is not None:
+        # add 1 to account for the space between cmd and subcmd
+        pre += len(ctx.subcommand_passed) + 1
+    ctx.clean_content = ctx.message.content[pre:]
+    ctx.invocation_content = ctx.message.content[:pre]
 
 
 class Gisi(AutoShardedBot):

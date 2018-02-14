@@ -30,10 +30,9 @@ class ASCII:
         return re.sub(prog, repl, text)
 
     @command()
-    async def asciify(self, ctx):
+    async def asciify(self, ctx, *, content):
         msg = ctx.message
-
-        new_content = self.asciiemojify(ctx.clean_content, require_wrapping=False)
+        new_content = self.asciiemojify(content, require_wrapping=False)
         if new_content != msg.content:
             await msg.edit(content=new_content)
 
