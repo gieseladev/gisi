@@ -1,3 +1,11 @@
+class Info:
+    name = "Gisi"
+    desc = "A *cough* tiny Discord self-bot"
+
+    version = "2018.02.15"
+    release = "alpha"
+
+
 class FileLocations:
     CONFIG = "data/config.json"
     LOGGING = "data/logging.json"
@@ -12,6 +20,7 @@ class Colours:
     ERROR = 0xFF4F48
 
     INFO = 0x4EFFA3
+
 
 class Sources:
     GISI_AVATAR = "https://i.imgur.com/Z8VX9CN.png"

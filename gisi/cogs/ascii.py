@@ -31,10 +31,8 @@ class ASCII:
 
     @command()
     async def asciify(self, ctx, *, content):
-        msg = ctx.message
         new_content = self.asciiemojify(content, require_wrapping=False)
-        if new_content != msg.content:
-            await msg.edit(content=new_content)
+        await ctx.message.edit(content=new_content)
 
     async def on_message(self, message):
         if message.author != self.bot.user:

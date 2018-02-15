@@ -1,7 +1,8 @@
+aiodns
 aiohttp
 cchardet
-aiodns
 colorlog
+motor
 Pillow
 selenium
 validators

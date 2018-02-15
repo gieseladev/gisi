@@ -13,10 +13,6 @@ from gisi.utils import chunks, extract_keys
 
 log = logging.getLogger(__name__)
 
-SetDefaults({
-    "wolfram_app_id": "EH8PUT-35T4RK4AVL"
-})
-
 
 class WolframAlpha:
     def __init__(self, bot):
@@ -53,6 +49,9 @@ class WolframAlpha:
 
 
 def setup(bot):
+    SetDefaults({
+        "wolfram_app_id": "EH8PUT-35T4RK4AVL"
+    })
     bot.add_cog(WolframAlpha(bot))
 
 

@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 class Defaults:
     token = None
     command_prefix = ">"
+    mongodb_uri = None
 
     webhook_url = None
 

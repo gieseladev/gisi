@@ -7,11 +7,12 @@ from datetime import datetime
 from aiohttp import ClientSession
 from discord import AsyncWebhookAdapter, Embed, Webhook
 from discord.ext.commands import AutoShardedBot, CommandInvokeError
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from . import utils
 from .config import Config
-from .constants import Colours, FileLocations
-from .core import Core
+from .constants import Colours, FileLocations, Info
+from .core import Core, GisiHelpFormatter
 from .signals import GisiSignal
 from .utils import WebDriver
 
@@ -38,7 +39,10 @@ class Gisi(AutoShardedBot):
 
         self._before_invoke = before_invoke
 
-        self.aiosession = ClientSession()
+        self.mongo_client = AsyncIOMotorClient(self.config.mongodb_uri)
+        self.aiosession = ClientSession(headers={
+            "User-Agent": f"{Info.name}/{Info.version}"
+        })
         self.webdriver = WebDriver(kill_on_exit=False)
         self.webhook = Webhook.from_url(self.config.webhook_url, adapter=AsyncWebhookAdapter(
             self.aiosession)) if self.config.webhook_url else None
@@ -49,7 +53,7 @@ class Gisi(AutoShardedBot):
         log.info("Gisi setup!")
 
     def __str__(self):
-        return "<Gisi>"
+        return f"<{Info.name}>"
 
     @property
     def uptime(self):
