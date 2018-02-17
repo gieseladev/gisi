@@ -1,7 +1,7 @@
 *.pyc
 .idea/
 venv/
-logs/
+logs/*.log
 
 data/config.json
 
