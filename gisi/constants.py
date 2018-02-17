@@ -13,6 +13,7 @@ class FileLocations:
     GECKO_LOG = "logs/gecko.log"
 
     COGS = "gisi/cogs"
+    FONTS = "data/fonts"
 
 
 class Colours:

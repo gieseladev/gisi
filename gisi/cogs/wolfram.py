@@ -9,6 +9,7 @@ from discord import File
 from discord.ext.commands import command
 
 from gisi import SetDefaults
+from gisi.constants import FileLocations
 from gisi.utils import chunks, extract_keys
 
 log = logging.getLogger(__name__)
@@ -134,7 +135,7 @@ class Document:
         vertical_padding = 40
         after_text_padding = 6
         after_image_padding = 15
-        doc_font = ImageFont.truetype("arial.ttf", 17)
+        doc_font = ImageFont.truetype(f"{FileLocations.FONTS}/arial.ttf", 17)
 
         images = await self.get_images(session)
         max_width = max(im.width for im in images)

@@ -12,7 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from . import utils
 from .config import Config
 from .constants import Colours, FileLocations, Info
-from .core import Core, GisiHelpFormatter
+from .core import Core
 from .signals import GisiSignal
 from .utils import WebDriver
 
@@ -42,7 +42,7 @@ class Gisi(AutoShardedBot):
         self.mongo_client = AsyncIOMotorClient(self.config.mongodb_uri)
         self.aiosession = ClientSession(headers={
             "User-Agent": f"{Info.name}/{Info.version}"
-        })
+        }, loop=self.loop)
         self.webdriver = WebDriver(kill_on_exit=False)
         self.webhook = Webhook.from_url(self.config.webhook_url, adapter=AsyncWebhookAdapter(
             self.aiosession)) if self.config.webhook_url else None
