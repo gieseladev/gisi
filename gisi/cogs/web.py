@@ -37,6 +37,7 @@ class Web:
                 await ctx.message.edit(content=f"<{url}> **isn't a valid url**")
                 return
 
+        await ctx.message.edit(content=f"waiting for driver...")
         async with self.bot.webdriver as driver:
             await ctx.message.edit(content=f"heading to {url}...")
             await driver.get(url)
