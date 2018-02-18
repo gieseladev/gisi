@@ -37,7 +37,7 @@ class Web:
             await driver.get(url)
             await ctx.message.edit(content=f"taking screenshot...")
             im = await driver.get_screenshot()
-            title = driver.title
+            title = driver.title or "No Title"
         imdata = BytesIO()
         im.save(imdata, "png")
         imdata.seek(0)
