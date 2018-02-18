@@ -22,20 +22,19 @@ class Web:
 
         Send a screenshot of the website at the given url.
         """
-        async with ctx.typing():
-            await ctx.message.edit(content=f"checking {url}...")
-            try:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
-                async with self.bot.aiosession.head(url, headers=headers, allow_redirects=True) as resp:
-                    resp.raise_for_status()
-            except ClientResponseError as e:
-                await ctx.message.edit(content=f"<{url}> **isn't a valid url ({e.code}: {e.message})**")
-                return
-            # Invalid URL is derived from ValueError
-            except (ValueError, ClientConnectorError):
-                await ctx.message.edit(content=f"<{url}> **isn't a valid url**")
-                return
+        await ctx.message.edit(content=f"checking {url}...")
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
+            async with self.bot.aiosession.head(url, headers=headers, allow_redirects=True) as resp:
+                resp.raise_for_status()
+        except ClientResponseError as e:
+            await ctx.message.edit(content=f"<{url}> **isn't a valid url ({e.code}: {e.message})**")
+            return
+        # Invalid URL is derived from ValueError
+        except (ValueError, ClientConnectorError):
+            await ctx.message.edit(content=f"<{url}> **isn't a valid url**")
+            return
 
         await ctx.message.edit(content=f"waiting for driver...")
         async with self.bot.webdriver as driver:

@@ -24,7 +24,7 @@ async def before_invoke(ctx):
     if ctx.invoked_subcommand is not None:
         # add 1 to account for the space between cmd and subcmd
         pre += len(ctx.subcommand_passed) + 1
-    ctx.clean_content = ctx.message.content[pre:]
+    ctx.clean_content = ctx.message.content[pre + 1:]
     ctx.invocation_content = ctx.message.content[:pre]
 
 

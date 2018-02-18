@@ -2,7 +2,7 @@ class Info:
     name = "Gisi"
     desc = "A *cough* tiny Discord self-bot"
 
-    version = "2018.02.18-1430"
+    version = "2018.02.18-1514"
     release = "alpha"
 
 
@@ -17,6 +17,7 @@ class FileLocations:
 
 
 class Colours:
+    SUCCESS = 0x15BA00
     ERROR_INFO = 0xFFE389
     ERROR = 0xFF4F48
 
