@@ -9,7 +9,7 @@ from discord.ext.commands import Command, HelpFormatter, command
 
 from .constants import Colours, Info, Sources
 from .signals import GisiSignal
-from .utils import text_utils
+from .utils import EmbedPaginator, copy_embed, text_utils
 
 log = logging.getLogger(__name__)
 
@@ -116,68 +116,10 @@ class Core:
             await ctx.send(embed=embed)
 
 
-class EmbedPaginator:
-    MAX_FIELDS = 25
-    MAX_FIELD_NAME = 256
-    MAX_FIELD_VALUE = 1024
-    MAX_TOTAL = 6000
-
-    def __init__(self, *, first_embed=None, every_embed=None):
-        self.first_embed = first_embed
-        self.every_embed = every_embed
-
-        self._cur_embed = self.copy_embed(first_embed) if first_embed else self.create_embed()
-        self._embeds = []
-
-    def __str__(self):
-        return f"<EmbedPaginator>"
-
-    def __iter__(self):
-        return iter(self.embeds)
-
-    @property
-    def predefined_count(self):
-        em = self._cur_embed
-        return len(em.title or "") + len(em.description or "") + len(em.author.name or "") + len(em.footer.text or "")
-
-    @property
-    def total_count(self):
-        return self.predefined_count + sum(len(field.name) + len(field.value) for field in self._cur_embed.fields)
-
-    @property
-    def embeds(self):
-        self.close_embed()
-        return self._embeds
-
-    @classmethod
-    def copy_embed(cls, embed):
-        return Embed.from_data(embed.to_dict())
-
-    def create_embed(self):
-        return self.copy_embed(self.every_embed)
-
-    def close_embed(self):
-        self._embeds.append(self._cur_embed)
-        self._cur_embed = self.create_embed()
-
-    def add_field(self, name, value, inline=False):
-        if len(name) > self.MAX_FIELD_NAME:
-            raise ValueError(f"Field name mustn't be longer than {self.MAX_FIELD_NAME} characters")
-        if len(value) > self.MAX_FIELD_VALUE:
-            raise ValueError(f"Field value mustn't be longer than {self.MAX_FIELD_VALUE} characters")
-        count = len(name) + len(value)
-        if self.total_count + count > self.MAX_TOTAL:
-            self.close_embed()
-        em = self._cur_embed
-        em.add_field(name=name, value=value, inline=inline)
-        if len(em.fields) >= self.MAX_FIELDS:
-            self.close_embed()
-
-
 class GisiHelpFormatter(HelpFormatter):
     async def format(self):
         every_embed = Embed(colour=0x15ba00)
-        first_embed = EmbedPaginator.copy_embed(every_embed)
+        first_embed = copy_embed(every_embed)
         first_embed.title = f"{Info.name} Help"
 
         description = self.command.description if not self.is_cog() else inspect.getdoc(self.command)

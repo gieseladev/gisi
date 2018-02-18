@@ -10,7 +10,7 @@ from discord import Embed, File
 from discord.ext.commands import group
 
 from gisi import SetDefaults
-from gisi.utils import extract_keys, maybe_extract_keys, text_utils
+from gisi.utils import EmbedPaginator, copy_embed, extract_keys, maybe_extract_keys, text_utils
 
 log = logging.getLogger(__name__)
 
@@ -44,16 +44,21 @@ class Google:
         result = await self.cse.search(query)
         await ctx.message.edit(content=f"{content} (processing...)")
         line = 5 * "─"
-        em = Embed(colour=random.choice([0x3cba54, 0xf4c20d, 0xdb3236, 0x4885ed]))
-        em.set_author(name=query, url=f"https://www.google.com/search?q={urllib.parse.quote(query)}",
-                      icon_url="http://www.pvhc.net/img207/bydtkmqbpsmeqcgkgidx.png")
-        em.set_footer(text="search",
-                      icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Google-favicon-2015.png/150px-Google-favicon-2015.png")
-        for item in result[:5]:
+        every_embed = Embed(colour=random.choice([0x3cba54, 0xf4c20d, 0xdb3236, 0x4885ed]))
+        first_embed = copy_embed(every_embed)
+        first_embed.set_author(name=query, url=f"https://www.google.com/search?q={urllib.parse.quote(query)}",
+                               icon_url="http://www.pvhc.net/img207/bydtkmqbpsmeqcgkgidx.png")
+        paginator = EmbedPaginator(first_embed=first_embed, every_embed=every_embed)
+        for item in result:
             snippet = text_utils.escape(text_utils.fit_sentences(item.snippet, max_length=200))
-            em.add_field(name=item.title, value=f"[{item.link}]({item.link})\n{text_utils.italic(snippet)}\n{line}",
-                         inline=False)
-        await ctx.send(embed=em)
+            paginator.add_field(item.title, f"[{item.link}]({item.link})\n{text_utils.italic(snippet)}\n{line}")
+
+        embeds = paginator.embeds
+        embeds[-1].set_footer(text="search",
+                              icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Google-favicon-2015.png/150px-Google-favicon-2015.png")
+        for em in embeds:
+            await ctx.send(embed=em)
+
         await ctx.message.edit(content=f"{content} (done!)")
 
     @search.command()
