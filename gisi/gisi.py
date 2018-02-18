@@ -6,7 +6,7 @@ from datetime import datetime
 
 from aiohttp import ClientSession
 from discord import AsyncWebhookAdapter, Embed, Status, Webhook
-from discord.ext.commands import AutoShardedBot, CommandInvokeError
+from discord.ext.commands import AutoShardedBot, CommandInvokeError, CommandNotFound
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from . import utils
@@ -113,6 +113,10 @@ class Gisi(AutoShardedBot):
             await self.webhook.send(embeds=[ctx_em, exc_em])
 
     async def on_command_error(self, context, exception):
+        if isinstance(exception, CommandNotFound):
+            log.debug(f"ignoring unknown command {context.message.content}")
+            return
+
         log.error(f"Command error {context} / {exception}")
 
         if self.webhook:

@@ -1,9 +1,12 @@
 import logging
 import re
+from math import ceil
 
-from discord.ext.commands import command
+from discord import Embed
+from discord.ext.commands import group
 
 from gisi import SetDefaults
+from gisi.constants import Colours
 from gisi.utils import text_utils
 
 log = logging.getLogger(__name__)
@@ -34,14 +37,41 @@ class ASCII:
 
         return re.sub(prog, repl, text)
 
-    @command()
-    async def asciify(self, ctx, *, content):
+    @group()
+    async def asciify(self, ctx):
         """Find and convert asciimojis.
 
         For each word try to find a asciimoji and use it.
         """
-        new_content = self.asciiemojify(content, require_wrapping=False)
+        new_content = self.asciiemojify(ctx.clean_content, require_wrapping=False)
         await ctx.message.edit(content=new_content)
+
+    @asciify.command()
+    async def show(self, ctx, page: int = 1):
+        """Show all the beautiful emojis"""
+        per_page = 25
+        n_pages = ceil(len(self.table) / per_page)
+        if not 0 < page <= n_pages:
+            await ctx.message.edit(content=f"{ctx.invocation_content} (**there are only {n_pages} pages**)")
+            return
+        targets = self.table[(page - 1) * 25:page * 25]
+        em = Embed(colour=Colours.INFO)
+        for target in targets:
+            em.add_field(name=", ".join(target["words"]), value=target["ascii"])
+        em.set_footer(text=f"Page {page}/{n_pages}")
+        await ctx.message.edit(embed=em)
+
+    @asciify.command()
+    async def enable(self, ctx):
+        """Enable the beautiful conversion"""
+        self.bot.config.ascii_enabled = True
+        await ctx.message.edit(content=f"{ctx.message.content} (enabled)")
+
+    @asciify.command()
+    async def disable(self, ctx):
+        """Disable the beautiful conversion"""
+        self.bot.config.ascii_enabled = False
+        await ctx.message.edit(content=f"{ctx.message.content} (disabled)")
 
     async def on_message(self, message):
         if message.author != self.bot.user:
