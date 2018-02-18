@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 from aiohttp import ClientSession
-from discord import AsyncWebhookAdapter, Embed, Webhook
+from discord import AsyncWebhookAdapter, Embed, Status, Webhook
 from discord.ext.commands import AutoShardedBot, CommandInvokeError
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -34,6 +34,7 @@ class Gisi(AutoShardedBot):
         self.config = Config.load()
         super().__init__(self.config.command_prefix,
                          description=Info.desc,
+                         status=Status.idle,
                          self_bot=True)
 
         self._signal = None
