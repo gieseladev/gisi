@@ -73,7 +73,7 @@ class Core:
         """
 
         async def _command_not_found(name):
-            em = Embed(colour="red")
+            em = Embed(description=f"No command called **{name}**", colour=Colours.ERROR)
             await ctx.send(embed=em)
 
         bot = ctx.bot
@@ -87,26 +87,27 @@ class Core:
             else:
                 cmd = bot.all_commands.get(name)
                 if cmd is None:
-                    await ctx.send(bot.command_not_found.format(name))
+                    await _command_not_found(name)
                     return
 
             embeds = await self.formatter.format_help_for(ctx, cmd)
         else:
             # handle groups
             name = commands[0]
-            cmd = bot.commands.get(name)
+            cmd = bot.all_commands.get(name)
             if cmd is None:
-                await ctx.send(bot.command_not_found.format(name))
+                await _command_not_found(name)
                 return
 
             for key in commands[1:]:
                 try:
                     cmd = cmd.commands.get(key)
                     if cmd is None:
-                        await ctx.send(bot.command_not_found.format(key))
+                        await _command_not_found(key)
                         return
                 except AttributeError:
-                    await ctx.send(bot.command_has_no_subcommands.format(command, key))
+                    em = Embed(description=f"Command **{cmd.name}** has no subcommands", colour=Colours.ERROR)
+                    await ctx.send(embed=em)
                     return
 
             embeds = await self.formatter.format_help_for(ctx, cmd)
