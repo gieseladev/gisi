@@ -5,17 +5,22 @@ from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageStat
 from aiohttp import ClientSession
-from discord import File
+from discord import Embed, File
 from discord.ext.commands import command
 
 from gisi import SetDefaults
-from gisi.constants import FileLocations
+from gisi.constants import Colours, FileLocations
 from gisi.utils import chunks, extract_keys
 
 log = logging.getLogger(__name__)
 
 
 class WolframAlpha:
+    """WolframAlpha is pretty cool.
+
+    What do you mean that doesn't suffice as a description?
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.aiosession = bot.aiosession
@@ -23,9 +28,15 @@ class WolframAlpha:
 
     @command()
     async def ask(self, ctx, *, query):
+        """Ask important questions."""
         content = f"{ctx.invocation_content} `{query}`"
         await ctx.message.edit(content=f"{content} (processing...)")
-        doc = await self.wolfram_client.query(query)
+        try:
+            doc = await self.wolfram_client.query(query)
+        except WolframError as e:
+            em = Embed(title=e.error["msg"], description=f"Error code: {e.code}", colour=Colours.ERROR)
+            await ctx.send(embed=em)
+            return
         if not doc:
             await ctx.message.edit(content=f"{content} **No Results found!**")
             return
@@ -85,7 +96,14 @@ class Client:
 
 
 class WolframError(Exception):
-    pass
+    def __init__(self, error):
+        self.error = error
+
+    def __str__(self):
+        return f"WolframError {self.error}"
+
+    def __getattr__(self, item):
+        return self.error[item]
 
 
 class Document:
@@ -153,7 +171,8 @@ class Document:
 
         def finalise_image():
             nonlocal doc_im, doc_draw, x, y, final_images, current_max_width
-            doc_im = doc_im.crop((0, 0, current_max_width, y - after_image_padding + vertical_padding // 2))
+            doc_im = doc_im.crop(
+                (0, 0, current_max_width, min(y - after_image_padding + vertical_padding // 2, max_height_per_image)))
             final_images.append(doc_im)
 
             doc_im = Image.new("RGB", (width, max_height_per_image), (35, 39, 42))

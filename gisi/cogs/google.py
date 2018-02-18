@@ -21,6 +21,11 @@ SetDefaults({
 
 
 class Google:
+    """Google is always there for you.
+
+    Just like Gisi!
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.aiosession = bot.aiosession
@@ -29,6 +34,7 @@ class Google:
 
     @group()
     async def search(self, ctx):
+        """Search with the most powerful search engine."""
         if ctx.invoked_subcommand:
             return
         query = ctx.clean_content
@@ -52,6 +58,7 @@ class Google:
 
     @search.command()
     async def images(self, ctx, *, query):
+        """Search for images."""
         content = f"{ctx.invocation_content} `{query}`"
         await ctx.message.edit(content=f"{content} (searching...)")
         result = await self.cse.search_images(query)

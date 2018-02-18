@@ -8,6 +8,8 @@ log = logging.getLogger(__name__)
 
 
 class Grammar:
+    """For all the grammar nazis out there."""
+
     def __init__(self, bot):
         self.bot = bot
         self.aiosession = bot.aiosession
@@ -48,19 +50,23 @@ class Grammar:
 
     @group()
     async def grammar(self, ctx):
+        """Mind your grammar"""
         pass
 
     @grammar.command()
     async def check(self, ctx, *, content):
+        """Check the provided text and autocorrect it."""
         await self.check_message(ctx.message, content)
 
     @grammar.command()
     async def enable(self, ctx):
+        """Enable autocorrect."""
         self.bot.config.grammar_check_enabled = True
         await ctx.message.edit(content=f"{ctx.message.content} (enabled)")
 
     @grammar.command()
     async def disable(self, ctx):
+        """Disable autocorrect."""
         self.bot.config.grammar_check_enabled = False
         await ctx.message.edit(content=f"{ctx.message.content} (disabled)")
 

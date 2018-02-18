@@ -10,6 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class ASCII:
+    """Convert -name- into asciimojis!
+
+    Because you can never have enough emojis in your life! ヽ༼ຈل͜ຈ༽ﾉ
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.table = list(ASCIImoji.values())
@@ -31,6 +36,10 @@ class ASCII:
 
     @command()
     async def asciify(self, ctx, *, content):
+        """Find and convert asciimojis.
+
+        For each word try to find a asciimoji and use it.
+        """
         new_content = self.asciiemojify(content, require_wrapping=False)
         await ctx.message.edit(content=new_content)
 

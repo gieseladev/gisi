@@ -1,18 +1,22 @@
+import inspect
 import itertools
 import logging
 import time
 from datetime import timedelta
 
 from discord import Embed
-from discord.ext.commands import HelpFormatter, command
+from discord.ext.commands import Command, HelpFormatter, command
 
 from .constants import Colours, Info, Sources
 from .signals import GisiSignal
+from .utils import text_utils
 
 log = logging.getLogger(__name__)
 
 
 class Core:
+    """Some veeery important operations for Gisi."""
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -21,16 +25,28 @@ class Core:
 
     @command()
     async def shutdown(self, ctx):
+        """Shutdown.
+
+        What do you expect...?
+        """
         log.warning("shutting down!")
         await self.bot.signal(GisiSignal.SHUTDOWN)
 
     @command()
     async def restart(self, ctx):
+        """Restart.
+
+        Keep in mind that this doesn't reload the code.
+        """
         log.warning("restarting!")
         await self.bot.signal(GisiSignal.RESTART)
 
     @command()
     async def status(self, ctx):
+        """Get some status help.
+
+        It really just prints a lot of information for no real use.
+        """
         em = Embed(title=f"{Info.name} Status", colour=Colours.INFO)
         em.add_field(name="Version", value=f"{Info.version}-{Info.release}")
         em.add_field(name="Ping", value=f"🌀")
@@ -48,10 +64,18 @@ class Core:
 
     @command()
     async def help(self, ctx, *commands):
-        """Short summary
+        """Help me
 
-        Longer description!
+        [p]help [Category]
+        [p]help [Command]
+
+        Just use whatever you want ¯\_(ツ)_/¯
         """
+
+        async def _command_not_found(name):
+            em = Embed(colour="red")
+            await ctx.send(embed=em)
+
         bot = ctx.bot
         if len(commands) == 0:
             embeds = await self.formatter.format_help_for(ctx, bot)
@@ -61,8 +85,8 @@ class Core:
             if name in bot.cogs:
                 cmd = bot.cogs[name]
             else:
-                cmd = bot.commands.get(name)
-                if command is None:
+                cmd = bot.all_commands.get(name)
+                if cmd is None:
                     await ctx.send(bot.command_not_found.format(name))
                     return
 
@@ -152,7 +176,13 @@ class EmbedPaginator:
 class GisiHelpFormatter(HelpFormatter):
     async def format(self):
         every_embed = Embed(colour=0x15ba00)
-        first_embed = Embed(title=f"{Info.name} Help", colour=0x15ba00)
+        first_embed = EmbedPaginator.copy_embed(every_embed)
+        first_embed.title = f"{Info.name} Help"
+
+        description = self.command.description if not self.is_cog() else inspect.getdoc(self.command)
+        if description:
+            first_embed.description = description
+
         paginator = EmbedPaginator(first_embed=first_embed, every_embed=every_embed)
 
         def get_commands_text(commands):
@@ -163,10 +193,28 @@ class GisiHelpFormatter(HelpFormatter):
                     # skip aliases
                     continue
 
-                entry = f"  {name:<{max_width}} {cmd.short_doc}"
+                entry = f"{name:<{max_width}} | {cmd.short_doc}"
                 shortened = self.shorten(entry)
                 value += shortened + "\n"
             return value
+
+        def get_final_embeds():
+            embeds = paginator.embeds
+            embeds[-1].set_footer(text=self.get_ending_note(), icon_url=embeds[-1].footer.icon_url)
+            return embeds
+
+        if isinstance(self.command, Command):
+            # <signature portion>
+            signature = self.get_command_signature()
+            paginator.add_field("Syntax", text_utils.code(signature, "fix"))
+
+            # <long doc> section
+            if self.command.help:
+                paginator.add_field("Help", text_utils.code(self.command.help, "css"))
+
+            # end it here if it's just a regular command
+            if not self.has_subcommands():
+                return get_final_embeds()
 
         def category(tup):
             cog = tup[1].cog_name
@@ -183,11 +231,9 @@ class GisiHelpFormatter(HelpFormatter):
                     name = category
 
                 value = get_commands_text(commands)
-                paginator.add_field(name, f"```\n{value}```")
+                paginator.add_field(name, text_utils.code(value, "css"))
         else:
             value = get_commands_text(await self.filter_command_list())
-            paginator.add_field("Commands", f"```\n{value}```")
+            paginator.add_field("Commands", text_utils.code(value, "css"))
 
-        embeds = paginator.embeds
-        embeds[-1].set_footer(text=self.get_ending_note(), icon_url=embeds[-1].footer.icon_url)
-        return embeds
+        return get_final_embeds()

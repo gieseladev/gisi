@@ -29,7 +29,7 @@ quote = partial(wrap, wrap=QUOTE_CHAR)
 escape_url = partial(wrap, wrap=URL_ESCAPE_SEQ)
 
 
-def code(s, lang):
+def code(s, lang=""):
     """Put it in a code block."""
     return f"{CODE_SEQ}{lang}\n{s}{CODE_SEQ}"
 

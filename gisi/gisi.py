@@ -32,7 +32,9 @@ class Gisi(AutoShardedBot):
 
     def __init__(self):
         self.config = Config.load()
-        super().__init__(self.config.command_prefix, self_bot=True)
+        super().__init__(self.config.command_prefix,
+                         description=Info.desc,
+                         self_bot=True)
 
         self._signal = None
         self.start_at = time.time()
@@ -92,7 +94,7 @@ class Gisi(AutoShardedBot):
 
     async def on_logout(self):
         log.debug("closing stuff")
-        self.aiosession.close()
+        await self.aiosession.close()
         self.webdriver.close()
 
     async def on_command(self, ctx):

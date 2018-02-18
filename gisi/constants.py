@@ -2,7 +2,7 @@ class Info:
     name = "Gisi"
     desc = "A *cough* tiny Discord self-bot"
 
-    version = "2018.02.15"
+    version = "2018.02.18"
     release = "alpha"
 
 
