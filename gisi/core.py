@@ -1,12 +1,14 @@
 import inspect
 import itertools
 import logging
+import sys
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from discord import Embed
-from discord.ext.commands import Command, HelpFormatter, command
+from discord.ext.commands import Command, CommandInvokeError, CommandNotFound, HelpFormatter, command
 
+from . import utils
 from .constants import Colours, Info, Sources
 from .signals import GisiSignal
 from .utils import EmbedPaginator, copy_embed, text_utils
@@ -114,6 +116,51 @@ class Core:
 
         for embed in embeds:
             await ctx.send(embed=embed)
+
+    async def on_command(self, ctx):
+        log.info(f"triggered command {ctx.command}")
+
+    async def on_error(self, event_method, *args, **kwargs):
+        log.exception("Client error")
+        if self.bot.webhook:
+            args = "\n".join([f"{arg}" for arg in args])
+            kwargs = "\n".join([f"{key}: {value}" for key, value in kwargs.items()])
+            ctx_em = Embed(title="Context Info", timestamp=datetime.now(), colour=Colours.ERROR_INFO,
+                           description=f"event: **{event_method}**\nArgs:```\n{args}```\nKwargs:```\n{kwargs}```")
+
+            exc_em = utils.embed.create_exception_embed(*sys.exc_info(), 8)
+            await self.bot.webhook.send(embeds=[ctx_em, exc_em])
+
+    async def on_command_error(self, context, exception):
+        if isinstance(exception, CommandNotFound):
+            log.debug(f"ignoring unknown command {context.message.content}")
+            return
+
+        log.error(f"Command error {context} / {exception}")
+
+        if self.bot.webhook:
+            ctx_em = Embed(title="Context Info", timestamp=datetime.now(), colour=Colours.ERROR_INFO,
+                           description=f"cog: **{type(context.cog).__qualname__}**\nguild: **{context.guild}**\nchannel: **{context.channel}**\nauthor: **{context.author}**")
+            ctx_em.add_field(name="Message",
+                             value=f"id: **{context.message.id}**\ncontent:```\n{context.message.content}```",
+                             inline=False)
+            args = "\n".join([f"{arg}" for arg in context.args])
+            kwargs = "\n".join([f"{key}: {value}" for key, value in context.kwargs.items()])
+            ctx_em.add_field(name="Command",
+                             value=f"name: **{context.command.name if context.command else context.command}**\nArgs:```\n{args}```\nKwargs:```\n{kwargs}```",
+                             inline=False)
+
+            if isinstance(exception, CommandInvokeError):
+                exc_type = type(exception.original)
+                exc_msg = str(exception.original)
+                exc_tb = exception.original.__traceback__
+            else:
+                exc_type = type(exception)
+                exc_msg = str(exception)
+                exc_tb = exception.__traceback__
+
+            exc_em = utils.embed.create_exception_embed(exc_type, exc_msg, exc_tb, 8)
+            await self.bot.webhook.send(embeds=[ctx_em, exc_em])
 
 
 class GisiHelpFormatter(HelpFormatter):

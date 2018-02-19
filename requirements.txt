@@ -2,6 +2,7 @@ aiodns
 aiohttp
 cchardet
 colorlog
+matplotlib
 motor
 Pillow
 selenium
