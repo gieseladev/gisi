@@ -30,7 +30,8 @@ class Statistics:
             occurrences[target_date] = occurrences.get(target_date, 0) + 1
         return occurrences
 
-    async def draw(self, occurrences):
+    @classmethod
+    def _draw(cls, occurrences):
         x, y = zip(*occurrences)
         plt.close()
         fig, ax = plt.subplots()
