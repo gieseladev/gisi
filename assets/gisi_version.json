@@ -1,9 +1,13 @@
 {
   "current_version": {
-    "version": "2018.02.20-1704",
+    "version": "2018.02.20-1716",
     "name": "Debrah"
   },
   "history": [{
+    "version": "2018.02.20-1716",
+    "type": "MINOR_FEATURE",
+    "change": "Can show new changes."
+  }, {
     "version": "2018.02.20-1704",
     "type": "BUGFIX",
     "change": "Correctly formatting version stamps."
