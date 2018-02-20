@@ -1,9 +1,13 @@
 {
   "current_version": {
-    "version": "2018.02.20-1515",
+    "version": "2018.02.20-1642",
     "name": "Debrah"
   },
   "history": [{
+    "version": "2018.02.20-1642",
+    "type": "MAJOR_FEATURE",
+    "change": "Added version commands for Gisi"
+  }, {
     "version": "2018.02.20-1402",
     "type": "MAJOR_FEATURE",
     "change": "Added version system."
