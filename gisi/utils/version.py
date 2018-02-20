@@ -1,14 +1,14 @@
 from datetime import datetime
-from enum import IntEnum
+from enum import IntEnum, auto
 
 from gisi.constants import Sources
 
 
 class ChangeType(IntEnum):
-    BUGFIX = 0
+    BUGFIX = auto()
 
-    MINOR_FEATURE = 1
-    MAJOR_FEATURE = 2
+    MINOR_FEATURE = auto()
+    MAJOR_FEATURE = auto()
 
 
 class VersionStamp:
@@ -38,7 +38,7 @@ class VersionStamp:
 
     @property
     def timestamp(self):
-        return f"{self.year}.{self.month}.{self.day}-{self.hour}{self.minute}"
+        return f"{self.year:04}.{self.month:02}.{self.day:02}-{self.hour:02}{self.minute:02}"
 
     @classmethod
     def from_timestamp(cls, timestamp):
