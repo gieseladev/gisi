@@ -1,0 +1,20 @@
+# Site settings
+title: Gisi
+email: siku2@outlook.com
+url: https://gieseladev.github.io/Gisi
+description: "A tiny Discord bot."
+
+# Color settings (hex-codes without the leading hash-tag)
+color:
+  primary-dark: '#000000'
+  links: '#219ab3'
+
+footer: Gisi
+
+social:
+  - title: github
+    url: https://github.com/GieselaDev
+
+# Build settings
+markdown: kramdown
+permalink: pretty
