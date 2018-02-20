@@ -18,6 +18,21 @@ class VersionStamp:
     def __repr__(self):
         return self.timestamp
 
+    def __eq__(self, other):
+        return isinstance(other, VersionStamp) and self.timestamp == other.timestamp
+
+    def __gt__(self, other):
+        return isinstance(other, VersionStamp) and self.timestamp > other.timestamp
+
+    def __ge__(self, other):
+        return isinstance(other, VersionStamp) and self.timestamp >= other.timestamp
+
+    def __lt__(self, other):
+        return isinstance(other, VersionStamp) and self.timestamp < other.timestamp
+
+    def __le__(self, other):
+        return isinstance(other, VersionStamp) and self.timestamp <= other.timestamp
+
     def __getattr__(self, item):
         return getattr(self.datetime, item)
 
