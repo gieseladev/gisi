@@ -43,6 +43,9 @@ class ASCII:
 
         For each word try to find a asciimoji and use it.
         """
+        if ctx.invoked_subcommand:
+            return
+
         new_content = self.asciiemojify(ctx.clean_content, require_wrapping=False)
         await ctx.message.edit(content=new_content)
 

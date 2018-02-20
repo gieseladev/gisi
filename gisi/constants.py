@@ -2,7 +2,8 @@ class Info:
     name = "Gisi"
     desc = "A *cough* tiny Discord self-bot"
 
-    version = "2018.02.20-1402"
+    version = "2018.02.20-1642"
+    version_name = "Debrah"
     release = "alpha"
 
 
@@ -25,4 +26,6 @@ class Colours:
 
 
 class Sources:
+    GISI_URL = "https://gieseladev.github.io/Gisi"
+    GISI_VERSION_LOG = f"{GISI_URL}/assets/gisi_version.json"
     GISI_AVATAR = "https://i.imgur.com/Z8VX9CN.png"

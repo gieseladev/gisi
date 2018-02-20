@@ -6,12 +6,13 @@ import time
 from datetime import datetime, timedelta
 
 from discord import Embed
-from discord.ext.commands import Command, CommandInvokeError, CommandNotFound, HelpFormatter, command
+from discord.ext.commands import Command, CommandInvokeError, CommandNotFound, HelpFormatter, command, \
+    group
 
 from . import utils
 from .constants import Colours, Info, Sources
 from .signals import GisiSignal
-from .utils import EmbedPaginator, copy_embed, text_utils
+from .utils import EmbedPaginator, copy_embed, text_utils, version
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,63 @@ class Core:
 
         em.set_field_at(1, name="Ping", value=f"{round(1000 * delay, 2)}ms")
         await ctx.message.edit(embed=em)
+
+    @group()
+    async def version(self, ctx):
+        """Display some very nice version information?"""
+        if ctx.invoked_subcommand:
+            return
+
+        changelog = await version.get_changelog(self.bot.aiosession)
+        current_versionstamp = version.VersionStamp.from_timestamp(Info.version)
+
+        title = "You're up to date!" if current_versionstamp == changelog.current_version.version else "There's a new version available!"
+
+        em = Embed(title=title, colour=Colours.INFO)
+        em.add_field(name="Local Version", value=f"{Info.version_name}\n{Info.version}")
+        em.add_field(name="Remote Version",
+                     value=f"{changelog.current_version.name}\n{changelog.current_version.version}")
+        await ctx.message.edit(embed=em)
+
+    @version.command(signature="changes [max entries] [min type] [min version]")
+    async def changes(self, ctx, *limits):
+        """Show all changes that match the given filters"""
+        filters = {}
+        if limits:
+            for limit in limits:
+                if limit.isnumeric():
+                    limit = int(limit)
+                    if limit <= 0:
+                        await ctx.message.edit(
+                            content=f"{ctx.message.content} | **Can't display less than 0 changes...**")
+                        return
+                    filters["max_entries"] = limit
+                else:
+                    try:
+                        stamp = version.VersionStamp.from_timestamp(limit)
+                    except ValueError:
+                        try:
+                            change_type = version.ChangeType[limit.upper()]
+                        except KeyError:
+                            await ctx.message.edit(
+                                content=f"{ctx.message.content} | **Couldn't convert convert {limit} to anything useful...**")
+                            return
+                        else:
+                            filters["min_type"] = change_type
+                    else:
+                        filters["min_version"] = stamp
+
+        changelog = await version.get_changelog(self.bot.aiosession)
+        filtered = changelog.filter_history(**filters)
+        every_embed = Embed(colour=Colours.INFO)
+        paginator = EmbedPaginator(every_embed=every_embed)
+        for entry in filtered:
+            paginator.add_field(name=entry.version.timestamp,
+                                value=f"{text_utils.bold(entry.change_type.name)}\n{entry.change}")
+
+        embeds = paginator.embeds
+        for embed in embeds:
+            await ctx.send(embed=embed)
 
     @command()
     async def help(self, ctx, *commands):
@@ -165,7 +223,7 @@ class Core:
 
 class GisiHelpFormatter(HelpFormatter):
     async def format(self):
-        every_embed = Embed(colour=0x15ba00)
+        every_embed = Embed(colour=Colours.INFO)
         first_embed = copy_embed(every_embed)
         first_embed.title = f"{Info.name} Help"
 
