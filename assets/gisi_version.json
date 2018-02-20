@@ -3,9 +3,9 @@
     "version": "2018.02.20-1515",
     "name": "Debrah"
   },
-  "history": {
-    "2018.02.20-1402": {
-      "change": "Added version system."
-    }
-  }
+  "history": [{
+    "version": "2018.02.20-1402",
+    "type": "MAJOR_FEATURE",
+    "change": "Added version system."
+  }]
 }
