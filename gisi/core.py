@@ -77,18 +77,20 @@ class Core:
         title = "You're up to date!" if current_versionstamp == changelog.current_version.version else "There's a new version available!"
 
         em = Embed(title=title, colour=Colours.INFO)
-        em.add_field(name="Local Version", value=f"{Info.version_name}\n{Info.version}")
+        em.add_field(name="Local Version", value=f"{Info.version_name}\n{Info.version}-{Info.release}")
         em.add_field(name="Remote Version",
                      value=f"{changelog.current_version.name}\n{changelog.current_version.version}")
         await ctx.message.edit(embed=em)
 
-    @version.command(signature="changes [max entries] [min type] [min version]")
+    @version.command(signature="changes [\"new\"] [max entries] [min type] [min version]")
     async def changes(self, ctx, *limits):
         """Show all changes that match the given filters"""
         filters = {}
         if limits:
             for limit in limits:
-                if limit.isnumeric():
+                if limit.lower() == "new":
+                    filters["min_version"] = version.VersionStamp.from_timestamp(Info.version)
+                elif limit.isnumeric():
                     limit = int(limit)
                     if limit <= 0:
                         await ctx.message.edit(
