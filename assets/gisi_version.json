@@ -1,9 +1,13 @@
 {
   "current_version": {
-    "version": "2018.02.20-1650",
+    "version": "2018.02.20-1704",
     "name": "Debrah"
   },
   "history": [{
+    "version": "2018.02.20-1704",
+    "type": "BUGFIX",
+    "change": "Correctly formatting version stamps."
+  }, {
     "version": "2018.02.20-1650",
     "type": "BUGFIX",
     "change": "Implemented comparison operators for version stamps."
