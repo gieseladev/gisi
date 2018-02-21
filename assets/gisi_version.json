@@ -3,25 +3,36 @@
     "version": "2018.02.20-1716",
     "name": "Debrah"
   },
-  "history": [{
-    "version": "2018.02.20-1716",
-    "type": "MINOR_FEATURE",
-    "change": "Can show new changes."
-  }, {
-    "version": "2018.02.20-1704",
-    "type": "BUGFIX",
-    "change": "Correctly formatting version stamps."
-  }, {
-    "version": "2018.02.20-1650",
-    "type": "BUGFIX",
-    "change": "Implemented comparison operators for version stamps."
-  }, {
-    "version": "2018.02.20-1642",
-    "type": "MAJOR_FEATURE",
-    "change": "Added version commands for Gisi"
-  }, {
-    "version": "2018.02.20-1402",
-    "type": "MAJOR_FEATURE",
-    "change": "Added version system."
-  }]
+  "history": [
+    {
+      "version": "2018.02.21-1933",
+      "type": "MAJOR_FEATURE",
+      "change": "ASCII is now Text and can do some cool custom replacer stuff."
+    },
+    {
+      "version": "2018.02.20-1716",
+      "type": "MINOR_FEATURE",
+      "change": "Can show new changes."
+    },
+    {
+      "version": "2018.02.20-1704",
+      "type": "BUGFIX",
+      "change": "Correctly formatting version stamps."
+    },
+    {
+      "version": "2018.02.20-1650",
+      "type": "BUGFIX",
+      "change": "Implemented comparison operators for version stamps."
+    },
+    {
+      "version": "2018.02.20-1642",
+      "type": "MAJOR_FEATURE",
+      "change": "Added version commands for Gisi"
+    },
+    {
+      "version": "2018.02.20-1402",
+      "type": "MAJOR_FEATURE",
+      "change": "Added version system."
+    }
+  ]
 }
