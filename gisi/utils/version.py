@@ -96,8 +96,8 @@ class Changelog:
     def filter_history(self, *, min_version=None, max_entries=None, min_type=None):
         entries = []
         for entry in reversed(self.history):
-            if min_version and entry.version < min_version:
-                break
+            if min_version and min_version >= entry.version:
+                continue
             if min_type and entry.change_type < min_type:
                 continue
             entries.append(entry)
