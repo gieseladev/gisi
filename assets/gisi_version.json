@@ -1,9 +1,24 @@
 {
   "current_version": {
-    "version": "2018.02.20-1716",
+    "version": "2018.02.21-1933",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.23-1418",
+      "type": "MINOR_FEATURE",
+      "change": "Show command supports images"
+    },
+    {
+      "version": "2018.02.23-1338",
+      "type": "BUGFIX",
+      "change": "Sending error message for Firefox marionette returning no data"
+    },
+    {
+      "version": "2018.02.23-1234",
+      "type": "BUGFIX",
+      "change": "Changing presence to afk should maybe hopefully fix things?"
+    },
     {
       "version": "2018.02.21-1933",
       "type": "MAJOR_FEATURE",
