@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.21-1933",
+    "version": "2018.02.24-0000",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.24-0000",
+      "type": "MAJOR_FEATURE",
+      "change": "Replace now supports lots of cool stuff?"
+    },
     {
       "version": "2018.02.23-1418",
       "type": "MINOR_FEATURE",
