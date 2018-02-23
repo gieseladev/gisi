@@ -19,7 +19,7 @@ class Programming:
         self.bot = bot
         self.aiosession = bot.aiosession
 
-    @command(signature="eval <instructions>")
+    @command(usage="<instructions>")
     async def eval(self, ctx):
         """A simple eval command which evaluates the given instructions.
 

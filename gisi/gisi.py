@@ -18,10 +18,7 @@ log = logging.getLogger(__name__)
 
 
 async def before_invoke(ctx):
-    pre = len(ctx.prefix + ctx.invoked_with)
-    if ctx.invoked_subcommand is not None:
-        # add 1 to account for the space between cmd and subcmd
-        pre += len(ctx.subcommand_passed) + 1
+    pre = len(ctx.prefix + ctx.command.qualified_name)
     ctx.clean_content = ctx.message.content[pre + 1:]
     ctx.invocation_content = ctx.message.content[:pre]
 
@@ -32,7 +29,6 @@ class Gisi(AutoShardedBot):
         self.config = Config.load()
         super().__init__(self.config.command_prefix,
                          description=Info.desc,
-                         status=Status.idle,
                          self_bot=True)
 
         self._signal = None
@@ -91,6 +87,7 @@ class Gisi(AutoShardedBot):
         return await self.start(self.config.token, bot=False)
 
     async def on_ready(self):
+        await self.change_presence(status=Status.idle, afk=True)
         await self.webdriver.spawn()
         log.info("ready!")
 

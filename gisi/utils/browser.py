@@ -1,10 +1,10 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from enum import Enum
 from functools import partial, wraps
 from io import BytesIO
 from threading import Lock
-from enum import Enum
 
 from PIL import Image
 from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
@@ -83,7 +83,10 @@ class WebDriver:
         current_size = self.get_window_size()
 
         self.set_window_size(*size)
-        data = BytesIO(self.get_screenshot_as_png())
+        raw_data = self.get_screenshot_as_png()
+        if not raw_data:
+            return None
+        data = BytesIO(raw_data)
         im = Image.open(data)
 
         self.set_window_size(**current_size)

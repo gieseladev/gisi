@@ -113,7 +113,10 @@ class Core:
                         filters["min_version"] = stamp
 
         changelog = await version.get_changelog(self.bot.aiosession)
-        filtered = changelog.filter_history(**filters)
+        filtered = list(changelog.filter_history(**filters))
+        if not filtered:
+            await ctx.message.edit(content=f"{ctx.message.content} | **Nothing to show**")
+            return
         every_embed = Embed(colour=Colours.INFO)
         paginator = EmbedPaginator(every_embed=every_embed)
         for entry in filtered:
@@ -163,7 +166,7 @@ class Core:
 
             for key in commands[1:]:
                 try:
-                    cmd = cmd.commands.get(key)
+                    cmd = cmd.all_commands.get(key)
                     if cmd is None:
                         await _command_not_found(key)
                         return
@@ -279,9 +282,8 @@ class GisiHelpFormatter(HelpFormatter):
                 commands = list(commands)
                 if len(commands) > 0:
                     name = category
-
-                value = get_commands_text(commands)
-                paginator.add_field(name, text_utils.code(value, "css"))
+                    value = get_commands_text(commands)
+                    paginator.add_field(name, text_utils.code(value, "css"))
         else:
             value = get_commands_text(await self.filter_command_list())
             paginator.add_field("Commands", text_utils.code(value, "css"))

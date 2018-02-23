@@ -1,9 +1,17 @@
+import inspect
 import logging
+import marshal
 import re
+import shlex
+import textwrap
+from collections import namedtuple
 
+import pymongo.errors
+from discord import Embed
 from discord.ext.commands import group
 
 from gisi import SetDefaults
+from gisi.constants import Colours
 from gisi.utils import text_utils
 
 log = logging.getLogger(__name__)
@@ -22,6 +30,7 @@ class Text:
 
     async def on_ready(self):
         collections = await self.bot.mongo_db.collection_names()
+        await self.replacers.create_index("triggers", name="triggers", unique=True)
         if "replacers" not in collections:
             log.debug("replacer collection not found, uploading default")
             await self.replacers.insert_many(default_replacers, ordered=False)
@@ -35,7 +44,11 @@ class Text:
             self.cached_replacers[key] = repl
         if not repl:
             return None
-        return repl["replacement"]
+        replacement = repl["replacement"]
+        if isinstance(replacement, bytes):
+            replacer = parse_replacer(replacement)
+            replacement = replacer.get(*args)
+        return replacement
 
     async def replace_text(self, text, require_wrapping=True):
         prog = re.compile(r"(?<!\\)-(.+)-" if require_wrapping else r"(\w+)")
@@ -45,8 +58,8 @@ class Text:
             match = prog.search(text, start)
             if not match:
                 break
-            start += match.end()
-            key, *args = match.group().split()
+            start = match.end()
+            key, *args = shlex.split(match.group(1))
             key = key.lower()
             new = await self.get_replacement(key, args)
             if not new:
@@ -71,26 +84,110 @@ class Text:
         await ctx.message.edit(content=new_content)
 
     @replace.group()
-    async def add(self, ctx, trigger, replacement):
+    async def add(self, ctx):
         """Add a replacer"""
-        triggers = [trig.strip() for trig in trigger.split(",")]
-        await self.replacers.insert_one({"triggers": triggers, "replacement": replacement})
+        if ctx.invoked_subcommand:
+            return
+
+    @add.command()
+    async def simple(self, ctx, trigger, replacement):
+        """Add a replacer"""
+        triggers = [trig.strip().lower() for trig in trigger.split(",")]
+        try:
+            await self.replacers.insert_one({"triggers": triggers, "replacement": replacement})
+        except pymongo.errors.DuplicateKeyError:
+            em = Embed(description=f"There's already a replacer for {trigger}", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+        else:
+            em = Embed(description=f"{trigger} -> {replacement}", colour=Colours.INFO)
+            await ctx.message.edit(embed=em)
+
+    @add.command(usage="<trigger> <code>")
+    async def complex(self, ctx, trigger):
+        """Add a complex replacer."""
+        triggers = [trig.strip().lower() for trig in trigger.split(",")]
+        code = ctx.clean_content[len(trigger) + 1:]
+        code = code.strip("\n").strip("```python").strip("\n")
+        comp = compile_replacer(code)
+        replacer = parse_replacer(comp)
+        try:
+            tests = [
+                ["1", "3", "a"],
+                ["gisi"],
+                ["182"],
+                ["999", "hello this is a test", "please don't break", "many arguments",
+                 "55 args with numbers and letters combined"],
+                ["yogurt", "bread", "b", "d", "$"]
+            ]
+            for test in tests:
+                res = replacer.get(*test)
+                if not res:
+                    raise ValueError(f"Test {test} didn't return a value!")
+        except Exception as e:
+            em = Embed(title="Your oh so \"complex\" code threw an error", description=f"{e}", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+            return
+        replacement = dump_replacer(comp)
+        try:
+            await self.replacers.insert_one({"triggers": triggers, "replacement": replacement})
+        except pymongo.errors.DuplicateKeyError:
+            em = Embed(description=f"There's already a replacer for {trigger}", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+        else:
+            em = Embed(description=f"{trigger} -> {replacement}", colour=Colours.INFO)
+            await ctx.message.edit(embed=em)
 
     @replace.command()
-    async def show(self, ctx, page: int = 1):
-        """Show all the beautiful emojis
-        per_page = 25
-        n_pages = ceil(len(self.table) / per_page)
-        if not 0 < page <= n_pages:
-            await ctx.message.edit(content=f"{ctx.invocation_content} (**there are only {n_pages} pages**)")
+    async def remove(self, ctx, trigger):
+        """Remove a replacer."""
+        result = await self.replacers.delete_one({"trigger": trigger.lower()})
+        if result.deleted_count:
+            em = Embed(description=f"Removed {trigger}", colour=Colours.INFO)
+            await ctx.message.edit(embed=em)
+        else:
+            em = Embed(description=f"There's no replacer for {trigger}", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+
+    @replace.group()
+    async def alias(self, ctx):
+        """Aliases for replacements."""
+        if ctx.invoked_subcommand:
             return
-        targets = self.table[(page - 1) * 25:page * 25]
-        em = Embed(colour=Colours.INFO)
-        for target in targets:
-            em.add_field(name=", ".join(target["words"]), value=target["ascii"])
-        em.set_footer(text=f"Page {page}/{n_pages}")
-        await ctx.message.edit(embed=em)"""
-        pass
+
+    @alias.command()
+    async def add(self, ctx, trigger, new_trigger):
+        """Add a new trigger for an already existing trigger"""
+        new_triggers = [trig.strip().lower() for trig in new_trigger.split(",")]
+        try:
+            result = await self.replacers.update_one({"triggers": trigger},
+                                                     {"$push": {"triggers": {"$each": new_triggers}}})
+        except pymongo.errors.DuplicateKeyError:
+            em = Embed(description=f"There's already a replacer for {trigger}", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+        else:
+            if result.modified_count:
+                em = Embed(description=f"Added {new_trigger} for {trigger}", colour=Colours.INFO)
+                await ctx.message.edit(embed=em)
+            else:
+                em = Embed(description=f"There's no replacer for {trigger}", colour=Colours.ERROR)
+                await ctx.message.edit(embed=em)
+
+    @alias.command()
+    async def remove(self, ctx, trigger):
+        """Remove a trigger for an already existing trigger"""
+        replacer = await self.replacers.find_one({"triggers": trigger})
+        if not replacer:
+            em = Embed(description=f"Trigger {trigger} doesn't exist!", colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+            return
+        if len(replacer["triggers"]) <= 1:
+            em = Embed(description=f"Trigger {trigger} cannot be removed as it is the only trigger for this replacer!",
+                       colour=Colours.ERROR)
+            await ctx.message.edit(embed=em)
+            return
+        await self.replacers.update_one({"triggers": trigger}, {"$pull": {"triggers": trigger}})
+        em = Embed(description=f"Removed {trigger}", colour=Colours.INFO)
+        await ctx.message.edit(embed=em)
 
     @replace.command()
     async def enable(self, ctx):
@@ -124,6 +221,47 @@ def setup(bot):
         "replacer_enabled": True
     })
     bot.add_cog(Text(bot))
+
+
+ComplexReplacer = namedtuple("ComplexReplacer", ("version", "get"))
+
+
+def parse_replacer(replacer):
+    if not inspect.iscode(replacer):
+        replacer = marshal.loads(replacer)
+    repl = {}
+    exec(replacer, repl)
+    return ComplexReplacer(repl["version"], repl["func"])
+
+
+def compile_replacer(code):
+    code = textwrap.indent(textwrap.dedent(code.strip("\n")), "\t")
+    source = """
+    version = "1.0.0"
+    def transpose(text, table, backwards=False):
+        result = []
+        for char in text:
+            result.append(table.get(char, char))
+        if backwards:
+            result = reversed(result)
+        return "".join(result)
+    def func(*args):
+    {code}
+    """
+    source = textwrap.dedent(source)
+    source = source.format(code=code)
+    try:
+        comp = compile(source, "<string>", "exec", optimize=2)
+    except (SyntaxError, ValueError):
+        raise
+    else:
+        return comp
+
+
+def dump_replacer(code):
+    if not inspect.iscode(code):
+        code = compile_replacer(code)
+    return marshal.dumps(code)
 
 
 # SOURCE: https://github.com/hpcodecraft/ASCIImoji/blob/master/src/asciimoji.js
@@ -204,13 +342,6 @@ default_replacers = [
     },
     {
         "triggers": [
-            "because",
-            "since"
-        ],
-        "replacement": "∵"
-    },
-    {
-        "triggers": [
             "bigheart"
         ],
         "replacement": "❤"
@@ -281,12 +412,6 @@ default_replacers = [
             "catlenny"
         ],
         "replacement": "( ͡° ᴥ ͡°)﻿"
-    },
-    {
-        "triggers": [
-            "check"
-        ],
-        "replacement": "✓"
     },
     {
         "triggers": [
@@ -488,6 +613,25 @@ default_replacers = [
         "replacement": "$"
     },
     {
+        "triggers": ["dollarbill", "$"],
+        "replacement": dump_replacer("""
+            amount = args[0] if args else "10"
+            table = {
+                "0": "ο̲̅",
+                "1": "̅ι",
+                "2": "2̅",
+                "3": "3̅",
+                "4": "4̅",
+                "5": "5̲̅",
+                "6": "6̅",
+                "7": "7̅",
+                "8": "8̅",
+                "9": "9̅",
+            }
+            return f"[̲̅$̲̅({transpose(amount, table)}̅)̲̅$̲̅]"
+        """)
+    },
+    {
         "triggers": [
             "dong"
         ],
@@ -665,6 +809,43 @@ default_replacers = [
             "facepalm"
         ],
         "replacement": "(－‸ლ)"
+    },
+    {
+        "triggers": [
+            "fancytext"
+        ],
+        "replacement": """
+        text = args[0] if args else "beware, i am fancy!"
+        table = {
+            "a": "α",
+            "b": "в",
+            "c": "¢",
+            "d": "∂",
+            "e": "є",
+            "f": "ƒ",
+            "g": "g",
+            "h": "н",
+            "i": "ι",
+            "j": "נ",
+            "k": "к",
+            "l": "ℓ",
+            "m": "м",
+            "n": "η",
+            "o": "σ",
+            "p": "ρ",
+            "q": "q",
+            "r": "я",
+            "s": "ѕ",
+            "t": "т",
+            "u": "υ",
+            "v": "ν",
+            "w": "ω",
+            "x": "χ",
+            "y": "у",
+            "z": "z",
+        }
+        return transpose(text.lower(), table)
+        """
     },
     {
         "triggers": [
@@ -1291,16 +1472,9 @@ default_replacers = [
     },
     {
         "triggers": [
-            "peace",
-            "victory"
+            "peace"
         ],
         "replacement": "✌(-‿-)✌"
-    },
-    {
-        "triggers": [
-            "pear"
-        ],
-        "replacement": "(__>-"
     },
     {
         "triggers": [
@@ -1551,12 +1725,6 @@ default_replacers = [
             "suicide"
         ],
         "replacement": "ε/̵͇̿̿/’̿’̿ ̿(◡︵◡)"
-    },
-    {
-        "triggers": [
-            "sum"
-        ],
-        "replacement": "∑"
     },
     {
         "triggers": [
