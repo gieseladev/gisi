@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.24-0000",
+    "version": "2018.02.24-0021",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.24-0021",
+      "type": "BUGFIX",
+      "change": "Showing new changes should work now"
+    },
     {
       "version": "2018.02.24-0000",
       "type": "MAJOR_FEATURE",
