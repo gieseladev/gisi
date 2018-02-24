@@ -1,6 +1,7 @@
 import inspect
 import logging
 import marshal
+import random
 import re
 import shlex
 import textwrap
@@ -15,6 +16,17 @@ from gisi.constants import Colours
 from gisi.utils import text_utils
 
 log = logging.getLogger(__name__)
+
+COMPLEX_REPLACER_TESTS = [
+    ["gisi"],
+    ["1"],
+    ["123"],
+    ["gisi#0001"],
+    ["gisi", "is", "the", "worst"],
+    ["2", "gisis", "are", "too", "much"],
+    ["01238", "1237", "19"],
+    ["this is a long text for gisi"]
+]
 
 
 class Text:
@@ -107,18 +119,14 @@ class Text:
         comp = compile_replacer(code)
         replacer = parse_replacer(comp)
         try:
-            tests = [
-                ["1", "3", "a"],
-                ["gisi"],
-                ["182"],
-                ["999", "hello this is a test", "please don't break", "many arguments",
-                 "55 args with numbers and letters combined"],
-                ["yogurt", "bread", "b", "d", "$"]
-            ]
-            for test in tests:
+            tests = []
+            for test in COMPLEX_REPLACER_TESTS:
+                test_string = " ".join(test)
                 res = replacer.get(*test)
                 if not res:
                     raise ValueError(f"Test {test} didn't return a value!")
+                if not test_string.startswith(res):
+                    tests.append((test_string, res))
         except Exception as e:
             em = Embed(title="Your oh so \"complex\" code threw an error", description=f"{e}", colour=Colours.ERROR)
             await ctx.message.edit(embed=em)
@@ -130,13 +138,16 @@ class Text:
             em = Embed(description=f"There's already a replacer for {trigger}", colour=Colours.ERROR)
             await ctx.message.edit(embed=em)
         else:
-            em = Embed(description=f"{trigger} -> {replacement}", colour=Colours.INFO)
+            sample = random.sample(tests, 4) if len(tests) >= 4 else tests
+            replacement_string = "\n".join(f"{_trigger} -> {_replacement}" for _trigger, _replacement in sample)
+            em = Embed(title=f"Added complex replacer for {trigger}", description=replacement_string,
+                       colour=Colours.INFO)
             await ctx.message.edit(embed=em)
 
     @replace.command()
     async def remove(self, ctx, trigger):
         """Remove a replacer."""
-        result = await self.replacers.delete_one({"trigger": trigger.lower()})
+        result = await self.replacers.delete_one({"triggers": trigger.lower()})
         if result.deleted_count:
             em = Embed(description=f"Removed {trigger}", colour=Colours.INFO)
             await ctx.message.edit(embed=em)
@@ -898,6 +909,54 @@ default_replacers = [
             "heavytable"
         ],
         "replacement": "┬─┬﻿ ︵ /(.□. \\）"
+    },
+    {
+        "triggers": [
+            "fliptext"
+        ],
+        "replacement": dump_replacer("""
+        text = args[0] if args else "flip me like a table"
+        table = {
+            "a":"ɐ",
+            "b":"q",
+            "c":"ɔ",
+            "d":"p",
+            "e":"ǝ",
+            "f":"ɟ",
+            "g":"ƃ",
+            "h":"ɥ",
+            "i":"ı",
+            "j":"ɾ",
+            "k":"ʞ",
+            "l":"ן",
+            "m":"ɯ",
+            "n":"u",
+            "p":"d",
+            "q":"b",
+            "r":"ɹ",
+            "t":"ʇ",
+            "u":"n",
+            "v":"ʌ",
+            "w":"ʍ",
+            "y":"ʎ",
+            ".":"˙",
+            "[":"]",
+            "(":")",
+            "{":"}",
+            "?":"¿",
+            "!":"¡",
+            "'":",",
+            "<":">",
+            "_":"‾",
+            "\"":"„",
+            "\\":"\\",
+            ";":"؛",
+            "‿":"⁀",
+            "⁅":"⁆",
+            "∴":"∵"
+        }
+        return transpose(text.lower(), table, True)
+        """)
     },
     {
         "triggers": [
