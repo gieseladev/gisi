@@ -71,23 +71,19 @@ class Text:
 
         return text
 
-    @group()
+    @group(invoke_without_command=True)
     async def replace(self, ctx):
         """Find and convert asciimojis.
 
         For each word try to find a asciimoji and use it.
         """
-        if ctx.invoked_subcommand:
-            return
-
         new_content = await self.replace_text(ctx.clean_content, require_wrapping=False)
         await ctx.message.edit(content=new_content)
 
-    @replace.group()
+    @replace.group(invoke_without_command=True)
     async def add(self, ctx):
         """Add a replacer"""
-        if ctx.invoked_subcommand:
-            return
+        pass
 
     @add.command()
     async def simple(self, ctx, trigger, replacement):
@@ -148,14 +144,13 @@ class Text:
             em = Embed(description=f"There's no replacer for {trigger}", colour=Colours.ERROR)
             await ctx.message.edit(embed=em)
 
-    @replace.group()
+    @replace.group(invoke_without_command=True)
     async def alias(self, ctx):
         """Aliases for replacements."""
-        if ctx.invoked_subcommand:
-            return
+        pass
 
-    @alias.command()
-    async def add(self, ctx, trigger, new_trigger):
+    @alias.command(name="add")
+    async def add_alias(self, ctx, trigger, new_trigger):
         """Add a new trigger for an already existing trigger"""
         new_triggers = [trig.strip().lower() for trig in new_trigger.split(",")]
         try:
@@ -172,8 +167,8 @@ class Text:
                 em = Embed(description=f"There's no replacer for {trigger}", colour=Colours.ERROR)
                 await ctx.message.edit(embed=em)
 
-    @alias.command()
-    async def remove(self, ctx, trigger):
+    @alias.command(name="remove")
+    async def remove_alias(self, ctx, trigger):
         """Remove a trigger for an already existing trigger"""
         replacer = await self.replacers.find_one({"triggers": trigger})
         if not replacer:
@@ -814,7 +809,7 @@ default_replacers = [
         "triggers": [
             "fancytext"
         ],
-        "replacement": """
+        "replacement": dump_replacer("""
         text = args[0] if args else "beware, i am fancy!"
         table = {
             "a": "α",
@@ -845,7 +840,7 @@ default_replacers = [
             "z": "z",
         }
         return transpose(text.lower(), table)
-        """
+        """)
     },
     {
         "triggers": [

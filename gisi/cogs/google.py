@@ -32,11 +32,9 @@ class Google:
         self.cse = CSE(self.bot.config.google_api_key, search_engine=self.bot.config.search_engine_id,
                        aiosession=self.aiosession)
 
-    @group()
+    @group(invoke_without_command=True)
     async def search(self, ctx):
         """Search with the most powerful search engine."""
-        if ctx.invoked_subcommand:
-            return
         query = ctx.clean_content
         content = f"{ctx.invocation_content} `{query}`"
 

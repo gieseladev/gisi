@@ -48,7 +48,7 @@ class Grammar:
         if msg.content != new_content:
             await msg.edit(content=new_content)
 
-    @group()
+    @group(invoke_without_command=True)
     async def grammar(self, ctx):
         """Mind your grammar"""
         pass
