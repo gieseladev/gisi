@@ -59,7 +59,7 @@ class Text:
         replacement = repl["replacement"]
         if isinstance(replacement, bytes):
             replacer = parse_replacer(replacement)
-            replacement = replacer.get(*args)
+            replacement = str(replacer.get(*args))
         return replacement
 
     async def replace_text(self, text, require_wrapping=True):
@@ -94,12 +94,20 @@ class Text:
 
     @replace.group(invoke_without_command=True)
     async def add(self, ctx):
-        """Add a replacer"""
+        """Add a replacer
+
+        Use
+            [p]replace add simple - To add a simple match-replace replacer
+            [p]replace add complex - To add a complex replacer
+        """
         pass
 
     @add.command()
     async def simple(self, ctx, trigger, replacement):
-        """Add a replacer"""
+        """Add a simple replacer.
+
+        It's simple because <trigger> will be replaced with <replacement> and that's it.
+        """
         triggers = [trig.strip().lower() for trig in trigger.split(",")]
         try:
             await self.replacers.insert_one({"triggers": triggers, "replacement": replacement})
@@ -112,7 +120,18 @@ class Text:
 
     @add.command(usage="<trigger> <code>")
     async def complex(self, ctx, trigger):
-        """Add a complex replacer."""
+        """Add a complex replacer.
+
+        A complex replacer calls a function to determine the proper replacement to replace <trigger> with.
+        Write some kind of python code which returns the string you want to replace the <trigger> with.
+        You may use the array "args" which contains the arguments that were passed.
+
+        Example Code:
+        text = args[0] if args else "Your code has to work with every kind of input!"
+        return text
+
+        This will turn -trigger some_text- into some_text
+        """
         triggers = [trig.strip().lower() for trig in trigger.split(",")]
         code = ctx.clean_content[len(trigger) + 1:]
         code = code.strip("\n").strip("```python").strip("\n")
@@ -157,7 +176,11 @@ class Text:
 
     @replace.group(invoke_without_command=True)
     async def alias(self, ctx):
-        """Aliases for replacements."""
+        """Aliases for replacements.
+        Use
+            [p]replace alias add - To add a new alias for a replacer
+            [p]replace alias remove - To remove an alias from a replacer
+        """
         pass
 
     @alias.command(name="add")
@@ -180,7 +203,10 @@ class Text:
 
     @alias.command(name="remove")
     async def remove_alias(self, ctx, trigger):
-        """Remove a trigger for an already existing trigger"""
+        """Remove a trigger for an already existing trigger
+
+        You cannot remove a trigger if it's the last trigger for a replacer.
+        """
         replacer = await self.replacers.find_one({"triggers": trigger})
         if not replacer:
             em = Embed(description=f"Trigger {trigger} doesn't exist!", colour=Colours.ERROR)
