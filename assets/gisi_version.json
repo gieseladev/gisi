@@ -1,9 +1,19 @@
 {
   "current_version": {
-    "version": "2018.02.24-1302",
+    "version": "2018.02.24-1643",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.24-1643",
+      "type": "MINOR_FEATURE",
+      "change": "Complex replacers now display test results."
+    },
+    {
+      "version": "2018.02.24-1501",
+      "type": "BUGFIX",
+      "change": "Fixed deleting replacers."
+    },
     {
       "version": "2018.02.24-1302",
       "type": "BUGFIX",
