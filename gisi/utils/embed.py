@@ -2,6 +2,7 @@ import traceback
 from os import path
 
 from discord import Embed
+from discord.embeds import EmptyEmbed
 
 from gisi.constants import Colours
 
@@ -19,6 +20,11 @@ def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
     formatted_tb = "\n\n".join(tb)
     return Embed(title="Exception Info", colour=Colours.ERROR,
                  description=f"type: **{exc_type}**\nmessage:```\n{exc_msg}```\n\ntraceback:```\n{formatted_tb}```")
+
+
+async def add_embed(msg, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed):
+    em = Embed(title=title, description=description, colour=colour)
+    await msg.edit(embed=em)
 
 
 def copy_embed(embed):

@@ -1,5 +1,6 @@
 aiodns
 aiohttp
+beautifulsoup4
 cchardet
 colorlog
 matplotlib
@@ -7,5 +8,6 @@ motor
 Pillow
 selenium
 validators
+wordcloud
 
 https://github.com/Rapptz/discord.py/archive/rewrite.zip

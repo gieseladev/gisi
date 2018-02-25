@@ -167,6 +167,7 @@ class Text:
     async def remove(self, ctx, trigger):
         """Remove a replacer."""
         result = await self.replacers.delete_one({"triggers": trigger.lower()})
+        self.cached_replacers.clear()
         if result.deleted_count:
             em = Embed(description=f"Removed {trigger}", colour=Colours.INFO)
             await ctx.message.edit(embed=em)
@@ -188,7 +189,7 @@ class Text:
         """Add a new trigger for an already existing trigger"""
         new_triggers = [trig.strip().lower() for trig in new_trigger.split(",")]
         try:
-            result = await self.replacers.update_one({"triggers": trigger},
+            result = await self.replacers.update_one({"triggers": trigger.lower()},
                                                      {"$push": {"triggers": {"$each": new_triggers}}})
         except pymongo.errors.DuplicateKeyError:
             em = Embed(description=f"There's already a replacer for {trigger}", colour=Colours.ERROR)
@@ -207,7 +208,8 @@ class Text:
 
         You cannot remove a trigger if it's the last trigger for a replacer.
         """
-        replacer = await self.replacers.find_one({"triggers": trigger})
+        replacer = await self.replacers.find_one({"triggers": trigger.lower()})
+        self.cached_replacers.clear()
         if not replacer:
             em = Embed(description=f"Trigger {trigger} doesn't exist!", colour=Colours.ERROR)
             await ctx.message.edit(embed=em)
@@ -217,7 +219,7 @@ class Text:
                        colour=Colours.ERROR)
             await ctx.message.edit(embed=em)
             return
-        await self.replacers.update_one({"triggers": trigger}, {"$pull": {"triggers": trigger}})
+        await self.replacers.update_one({"triggers": trigger.lower()}, {"$pull": {"triggers": trigger.lower()}})
         em = Embed(description=f"Removed {trigger}", colour=Colours.INFO)
         await ctx.message.edit(embed=em)
 

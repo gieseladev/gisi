@@ -70,7 +70,7 @@ class Programming:
         em.colour = Colours.SUCCESS
         if str(ret):
             try:
-                raw_result = json.dumps(ret, indent=2)
+                raw_result = json.dumps(ret, cls=BeautyFormatter, indent=2)
                 result = text_utils.code(raw_result, "json")
             except TypeError:
                 raw_result = result = str(ret)
@@ -97,3 +97,13 @@ class Programming:
 
 def setup(bot):
     bot.add_cog(Programming(bot))
+
+
+class BeautyFormatter(json.JSONEncoder):
+    def default(self, o):
+        try:
+            d = vars(o)
+        except Exception:
+            return str(o)
+        else:
+            return {key: str(value) for key, value in d.items()}

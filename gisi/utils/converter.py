@@ -8,7 +8,7 @@ class UrlConverter(Converter):
     scheme_check = r"^http(s?)://"
 
     async def convert(self, ctx, argument):
-        url = argument.strip()
+        url = argument.strip("<>")
         if not re.match(self.scheme_check, url):
             url = f"http://{url}"
         try:
