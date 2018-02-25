@@ -1,9 +1,19 @@
 {
   "current_version": {
-    "version": "2018.02.25-1846",
+    "version": "2018.02.25-2242",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.25-2242",
+      "type": "MAJOR_FEATURE",
+      "change": "Added message commands like embed and quote."
+    },
+    {
+      "version": "2018.02.25-2012",
+      "type": "BUGFIX",
+      "change": "Replacers don't trigger in commands"
+    },
     {
       "version": "2018.02.25-1846",
       "type": "MAJOR_FEATURE",
