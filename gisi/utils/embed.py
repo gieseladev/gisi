@@ -1,7 +1,7 @@
 import traceback
 from os import path
 
-from discord import Embed
+from discord import Embed, Member, User
 from discord.embeds import EmptyEmbed
 
 from gisi.constants import Colours
@@ -22,8 +22,16 @@ def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
                  description=f"type: **{exc_type}**\nmessage:```\n{exc_msg}```\n\ntraceback:```\n{formatted_tb}```")
 
 
-async def add_embed(msg, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed):
-    em = Embed(title=title, description=description, colour=colour)
+async def add_embed(msg, *, author=None, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed,
+                    timestamp=EmptyEmbed):
+    em = Embed(title=title, description=description, colour=colour, timestamp=timestamp)
+    if author:
+        if isinstance(author, (Member, User)):
+            author = {
+                "name": author.name,
+                "icon_url": author.avatar_url
+            }
+        em.set_author(**author)
     await msg.edit(embed=em)
 
 

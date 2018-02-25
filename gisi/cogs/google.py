@@ -14,11 +14,6 @@ from gisi.utils import EmbedPaginator, copy_embed, extract_keys, maybe_extract_k
 
 log = logging.getLogger(__name__)
 
-SetDefaults({
-    "google_api_key": None,
-    "search_engine_id": "002017775112634544492:izg2ejvnmiq"
-})
-
 
 class Google:
     """Google is always there for you.
@@ -77,6 +72,10 @@ class Google:
 
 
 def setup(bot):
+    SetDefaults({
+        "google_api_key": None,
+        "search_engine_id": "002017775112634544492:izg2ejvnmiq"
+    })
     if not bot.config.google_api_key:
         log.error("No google api key found in config (key: \"google_api_key\"). Can't initialise cog!")
         return

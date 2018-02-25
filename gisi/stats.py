@@ -52,6 +52,10 @@ class Statistics:
         return img
 
     async def on_message(self, message):
+        if message.guild:
+            return
+        if message.author.bot or message.author.id == self.bot.user.id:
+            return
         await self.trigger_event("on_message")
 
     async def on_command(self, ctx):

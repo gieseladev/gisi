@@ -238,6 +238,9 @@ class Text:
     async def handle_message(self, message):
         if message.author != self.bot.user:
             return
+        ctx = await self.bot.get_context(message)
+        if ctx.command:
+            return
         if self.bot.config.replacer_enabled:
             new_content = await self.replace_text(message.content)
             if new_content != message.content:
