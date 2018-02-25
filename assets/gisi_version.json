@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.25-2242",
+    "version": "2018.02.25-2313",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.25-2313",
+      "type": "MINOR_FEATURE",
+      "change": "Version changes uses the new Flags system now."
+    },
     {
       "version": "2018.02.25-2242",
       "type": "MAJOR_FEATURE",
