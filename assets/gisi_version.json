@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.24-1643",
+    "version": "2018.02.25-1846",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.25-1846",
+      "type": "MAJOR_FEATURE",
+      "change": "Created Draw commands."
+    },
     {
       "version": "2018.02.24-1643",
       "type": "MINOR_FEATURE",
