@@ -23,6 +23,17 @@ class UrlConverter(Converter):
         return url
 
 
+def convert(obj, cls):
+    if cls is bool and isinstance(obj, str):
+        return obj.lower() in ("y", "yes", "t", "true")
+    try:
+        conv = cls(obj)
+    except Exception:
+        raise TypeError(f"can't convert {obj} ({type(obj)}) to {cls}")
+    else:
+        return conv
+
+
 class FlagConverter:
     def __init__(self, args, flags):
         self.args = args
@@ -87,7 +98,17 @@ class FlagConverter:
                         return self.args[k]
             else:
                 raise KeyError(f"{key} not found!")
-        except (KeyError, IndexError) as e:
+        except KeyError as e:
+            if default is _default:
+                raise e
+            else:
+                return default
+
+    def convert(self, key, target, default=_default):
+        try:
+            value = self.get(key)
+            return convert(value, target)
+        except (KeyError, TypeError) as e:
             if default is _default:
                 raise e
             else:

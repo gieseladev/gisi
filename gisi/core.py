@@ -12,7 +12,7 @@ from discord.ext.commands import Command, CommandInvokeError, CommandNotFound, H
 from . import utils
 from .constants import Colours, Info, Sources
 from .signals import GisiSignal
-from .utils import EmbedPaginator, copy_embed, text_utils, version
+from .utils import EmbedPaginator, FlagConverter, copy_embed, text_utils, version
 
 log = logging.getLogger(__name__)
 
@@ -82,35 +82,24 @@ class Core:
                      value=f"{changelog.current_version.name}\n{changelog.current_version.version}")
         await ctx.message.edit(embed=em)
 
-    @version.command(signature="changes [\"new\"] [max entries] [min type] [min version]")
-    async def changes(self, ctx, *limits):
-        """Show all changes that match the given filters"""
-        filters = {}
-        if limits:
-            for limit in limits:
-                if limit.lower() == "new":
-                    filters["min_version"] = version.VersionStamp.from_timestamp(Info.version)
-                elif limit.isnumeric():
-                    limit = int(limit)
-                    if limit <= 0:
-                        await ctx.message.edit(
-                            content=f"{ctx.message.content} | **Can't display less than 0 changes...**")
-                        return
-                    filters["max_entries"] = limit
-                else:
-                    try:
-                        stamp = version.VersionStamp.from_timestamp(limit)
-                    except ValueError:
-                        try:
-                            change_type = version.ChangeType[limit.upper()]
-                        except KeyError:
-                            await ctx.message.edit(
-                                content=f"{ctx.message.content} | **Couldn't convert convert {limit} to anything useful...**")
-                            return
-                        else:
-                            filters["min_type"] = change_type
-                    else:
-                        filters["min_version"] = stamp
+    @version.command(signature="changes [flags]")
+    async def changes(self, ctx, *flags):
+        """Show all changes that match the given filters
+
+        Flags:
+          -v <version> | min version
+          -t <type>    | min type
+          -n <number>  | max number
+        """
+        flags = FlagConverter.from_spec(flags, flag_arg_default=None)
+        filters = {
+            "min_version": flags.convert("v", version.VersionStamp.from_timestamp, None),
+            "min_type": flags.convert("t", lambda t: version.ChangeType[t.upper()], None),
+            "max_entries": flags.convert("n", int, 10)
+        }
+
+        if not any(filters.values()):
+            filters["min_version"] = version.VersionStamp.from_timestamp(Info.version)
 
         changelog = await version.get_changelog(self.bot.aiosession)
         filtered = list(changelog.filter_history(**filters))
