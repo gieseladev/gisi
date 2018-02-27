@@ -24,7 +24,7 @@ class Core:
         self.bot = bot
 
         self.bot.remove_command("help")
-        self.formatter = GisiHelpFormatter()
+        self.formatter = GisiHelpFormatter(width=60)
 
     @command()
     async def shutdown(self, ctx):
