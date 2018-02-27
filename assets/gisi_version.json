@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.27-2255",
+    "version": "2018.02.27-2305",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.27-2305",
+      "type": "BUGFIX",
+      "change": "Help command shortens descriptions if too long."
+    },
     {
       "version": "2018.02.27-2255",
       "type": "MINOR_FEATURE",
