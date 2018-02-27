@@ -4,7 +4,7 @@ from collections import Iterable
 from contextlib import suppress
 
 import validators
-from discord.ext.commands import BadArgument, Converter
+from discord.ext.commands import BadArgument, Command, Converter
 
 _default = object()
 
@@ -44,6 +44,9 @@ class FlagConverter:
 
     def __getattr__(self, item):
         return self.get(item)
+
+    def __contains__(self, item):
+        return item in self.flags
 
     @property
     def arg_count(self):
@@ -109,6 +112,16 @@ class FlagConverter:
             value = self.get(key)
             return convert(value, target)
         except (KeyError, TypeError) as e:
+            if default is _default:
+                raise e
+            else:
+                return default
+
+    async def convert_dis(self, key, ctx, converter, default=_default):
+        try:
+            argument = self.get(key)
+            return await Command.do_conversion(None, ctx, converter, argument)
+        except Exception as e:
             if default is _default:
                 raise e
             else:
