@@ -1,9 +1,19 @@
 {
   "current_version": {
-    "version": "2018.02.25-2313",
+    "version": "2018.02.27-2255",
     "name": "Debrah"
   },
   "history": [
+    {
+      "version": "2018.02.27-2255",
+      "type": "MINOR_FEATURE",
+      "change": "Draw text now uses the flag system and thus provides more options."
+    },
+    {
+      "version": "2018.02.27-1905",
+      "type": "MINOR_FEATURE",
+      "change": "Changed word cloud to use flag system and added features."
+    },
     {
       "version": "2018.02.25-2313",
       "type": "MINOR_FEATURE",
