@@ -162,7 +162,11 @@ class Draw:
             if _height < WC_HEIGHT:
                 _height = WC_HEIGHT
                 _width = int(WC_HEIGHT * colour_func.width / colour_func.height)
-            colour_func = colour_func.resize((_width, _height)).crop((0, 0, WC_WIDTH, WC_HEIGHT))
+
+            w_diff = abs(WC_WIDTH - _width) // 2
+            h_diff = abs(WC_HEIGHT - _height) // 2
+            colour_func = colour_func.resize((_width, _height)).crop(
+                (w_diff, h_diff, WC_WIDTH + w_diff, WC_HEIGHT + h_diff))
             colour_func = ImageColorGenerator(numpy.array(colour_func))
 
         wc = WordCloud(width=WC_WIDTH, height=WC_HEIGHT, mode="RGBA", background_color=None,
@@ -225,6 +229,7 @@ class Draw:
         Flags:
           [Flags from default wordcloud]
         """
+        flags = FlagConverter.from_spec(flags)
         await add_embed(ctx.message, description=f"Reading website ԅ(≖‿≖ԅ)", colour=Colours.INFO)
         async with self.bot.aiosession.get(url) as resp:
             content_type = resp.content_type
