@@ -169,6 +169,18 @@ class Core:
         for embed in embeds:
             await ctx.send(embed=embed)
 
+    async def on_ready(self):
+        if self.bot.webhook and self.bot.unloaded_extensions:
+            embeds = []
+            for name, package, exc in self.bot.unloaded_extensions:
+                exc_type = type(exc)
+                exc_msg = str(exc)
+                exc_tb = exc.__traceback__
+                em = utils.embed.create_exception_embed(exc_type, exc_msg, exc_tb, 8)
+                em.title = f"Couldn't load extension \"{name}\" ({package})"
+                embeds.append(em)
+            await self.bot.webhook.send(embeds=embeds)
+
     async def on_command(self, ctx):
         log.info(f"triggered command {ctx.command}")
 

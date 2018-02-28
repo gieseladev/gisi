@@ -49,6 +49,7 @@ class Gisi(AutoShardedBot):
         self.add_cog(self.statistics)
         self.add_cog(Core(self))
 
+        self.unloaded_extensions = []
         self.load_exts()
         log.info("Gisi setup!")
 
@@ -66,7 +67,8 @@ class Gisi(AutoShardedBot):
                 ext_package = f"{__package__}.cogs.{ext_name}"
                 try:
                     self.load_extension(ext_package)
-                except Exception:
+                except Exception as e:
+                    self.unloaded_extensions.append((ext_name, ext_package, e))
                     log.exception(f"Couldn't load extension. ({ext_name})")
                 else:
                     log.debug(f"loaded extension {ext_name}")
