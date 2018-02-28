@@ -15,9 +15,17 @@ from discord.ext.commands import ColourConverter, group
 from wordcloud import ImageColorGenerator, WordCloud
 
 from gisi.constants import Colours, FileLocations
-from gisi.utils import FlagConverter, UrlConverter, add_embed
+from gisi.utils import FlagConverter, UrlConverter, add_embed, chunks, text_utils
 
 log = logging.getLogger(__name__)
+_default = object()
+
+SAMPLE_SENTENCES = (
+    "Two driven jocks help fax my big quiz",
+    "The five boxing wizards jump quickly",
+    "Sphinx of black quartz, judge my vow",
+    "Pack my box with five dozen liquor jugs"
+)
 
 
 class Draw:
@@ -25,11 +33,6 @@ class Draw:
 
     def __init__(self, bot):
         self.bot = bot
-
-    @group(invoke_without_command=True)
-    async def draw(self, ctx):
-        """Drawings make the world more beautiful?"""
-        pass
 
     @staticmethod
     def get_size(text: str, font: ImageFont):
@@ -43,14 +46,14 @@ class Draw:
         return width, height
 
     @staticmethod
-    def get_font(name=None, *, default=None, pick_random=True):
+    def get_font(name=None, *, default=_default, pick_random=True):
         if name and name.lower():
-            name = name.lower.replace(" ", "_")
+            name = name.lower().replace(" ", "_")
             font_path = f"{FileLocations.FONTS}/{name}.otf"
             if path.isfile(font_path):
                 return font_path
 
-        if default:
+        if default is not _default:
             return default
         elif pick_random:
             font = random.choice(os.listdir(FileLocations.FONTS))
@@ -67,6 +70,80 @@ class Draw:
             return None
         else:
             return img
+
+    @group(invoke_without_command=True)
+    async def fonts(self, ctx):
+        """Haven't you ever wanted to mess with fonts?"""
+        fonts = [name.rpartition(".")[0].replace("_", " ").title() for name in os.listdir(FileLocations.FONTS)]
+        description = text_utils.code("\n".join(fonts), "css")
+        await add_embed(ctx.message, title="Available Fonts", description=description, colour=Colours.INFO)
+
+    @fonts.command("show")
+    async def font_show(self, ctx, *fonts):
+        """Render the fonts so you can see how they look.
+
+        If no fonts provided, it shows all of them
+        """
+        MARGIN = 10
+        LINE_SPACING = 5
+        TITLE_SPACING = 2
+
+        if fonts:
+            font_set = set()
+            for name in fonts:
+                font = Draw.get_font(name, default=None)
+                if not font:
+                    await add_embed(ctx.message, description=f"There's no font \"{font_name}\"", colour=Colours.ERROR)
+                    return
+                name = font.rpartition(".")[0].replace("_", " ").title()
+                font_set.add((name, font))
+            fonts = list(sorted(font_set))
+        else:
+            fonts = [(name.rpartition(".")[0].replace("_", " ").title(), f"{FileLocations.FONTS}/{name}") for name in
+                     os.listdir(FileLocations.FONTS)]
+
+        images = []
+        for font_chunk in chunks(fonts, 10):
+            samples = []
+            width = 0
+            height = 0
+            for name, font in font_chunk:
+                title_font = ImageFont.truetype(font=font, size=24)
+                text_font = ImageFont.truetype(font=font, size=16)
+                sample = random.choice(SAMPLE_SENTENCES)
+
+                n_width, n_height = Draw.get_size(name, title_font)
+                n_height += TITLE_SPACING
+                samples.append((name, (114, 137, 218), title_font, n_height))
+
+                t_width, t_height = Draw.get_size(sample, text_font)
+                t_height += LINE_SPACING
+                samples.append((sample, "white", text_font, t_height))
+
+                width = max(width, n_width, t_width)
+                height += n_height + t_height
+
+            width += MARGIN
+            height += MARGIN - LINE_SPACING
+            im = Image.new("RGBA", (width, height), color=None)
+            draw = ImageDraw.Draw(im)
+            y = MARGIN // 2
+            for text, fill, font, _height in samples:
+                draw.text((MARGIN // 2, y), text, fill=fill, font=font)
+                y += _height
+            images.append(im)
+
+        for im in images:
+            img_file = io.BytesIO()
+            im.save(img_file, "PNG")
+            img_file.seek(0)
+            file = File(img_file, "font.png")
+            await ctx.send(file=file)
+
+    @group(invoke_without_command=True)
+    async def draw(self, ctx):
+        """Drawings make the world more beautiful?"""
+        pass
 
     @draw.command()
     async def text(self, ctx, text, *flags):
