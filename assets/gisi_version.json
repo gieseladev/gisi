@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.03.01-1608",
+    "version": "2018.03.01-1842",
     "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.01-1842",
+      "type": "BUGFIX",
+      "change": "fix text replacer bug."
+    },
     {
       "version": "2018.03.01-1608",
       "type": "MINOR_FEATURE",
