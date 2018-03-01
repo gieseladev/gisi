@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.03.01-1457",
+    "version": "2018.03.01-1608",
     "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.01-1608",
+      "type": "MINOR_FEATURE",
+      "change": "Font add/remove commands."
+    },
     {
       "version": "2018.03.01-1457",
       "type": "BUGFIX",
