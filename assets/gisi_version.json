@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.03.01-1842",
+    "version": "2018.03.01-2225",
     "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.01-2225",
+      "type": "BUGFIX",
+      "change": "fonts should be ordered alphabetically."
+    },
     {
       "version": "2018.03.01-1842",
       "type": "BUGFIX",
