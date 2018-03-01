@@ -10,7 +10,7 @@ def session_start():
     from gisi.constants import FileLocations
     config = {
         "token": os.environ["DISCORD_TOKEN"],
-        "mongodb_uri": os.environ["MONGODB_URI"],
+        "mongodb_uri": "mongodb://localhost:27017",
         "google_api_key": os.environ["GOOGLE_API_KEY"]
     }
     with open(FileLocations.CONFIG, "w+") as f:
@@ -22,6 +22,6 @@ async def test_login():
     import gisi
     g = gisi.Gisi()
     try:
-        await asyncio.wait(g.run(), timeout=5)
+        await asyncio.wait_for(g.run(), timeout=5)
     except asyncio.TimeoutError:
         pass
