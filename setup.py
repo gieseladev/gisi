@@ -26,6 +26,6 @@ setup(
         "wordcloud",
     ],
     dependency_links=[
-        "https://github.com/Rapptz/discord.py/tree/rewrite#egg=discord"
+        "https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord"
     ]
 )
