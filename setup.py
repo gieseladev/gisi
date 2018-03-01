@@ -10,5 +10,19 @@ setup(
     author="siku2",
     author_email="siku2@outlook.com",
     license="MIT",
-    packages=find_packages(exclude=["docs", "tests"])
+    packages=find_packages(exclude=["docs", "tests"]),
+    install_requires=[
+        "aiodns",
+        "aiohttp",
+        "beautifulsoup4",
+        "cchardet",
+        "colorlog",
+        "matplotlib",
+        "motor",
+        "Pillow",
+        "selenium",
+        "validators",
+        "wordcloud",
+        "https://github.com/Rapptz/discord.py/archive/rewrite.zip"
+    ]
 )
