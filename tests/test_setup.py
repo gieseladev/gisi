@@ -8,7 +8,6 @@ import pytest
 @pytest.fixture(scope="session", autouse=True)
 def session_start():
     from gisi.constants import FileLocations
-    print(os.environ)
     config = {
         "token": os.environ["DISCORD_TOKEN"],
         "mongodb_uri": os.environ["MONGODB_URI"],
