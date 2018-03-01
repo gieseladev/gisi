@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.02.28-2114",
-    "name": "Debrah"
+    "version": "2018.03.01-1457",
+    "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.01-1457",
+      "type": "BUGFIX",
+      "change": "Text replacers more stable format."
+    },
     {
       "version": "2018.02.28-2114",
       "type": "MAJOR_FEATURE",
