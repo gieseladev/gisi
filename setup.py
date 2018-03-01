@@ -17,12 +17,15 @@ setup(
         "beautifulsoup4",
         "cchardet",
         "colorlog",
+        "discord",
         "matplotlib",
         "motor",
         "Pillow",
         "selenium",
         "validators",
         "wordcloud",
-        "https://github.com/Rapptz/discord.py/archive/rewrite.zip"
+    ],
+    dependency_links=[
+        "https://github.com/Rapptz/discord.py/tree/rewrite#egg=discord"
     ]
 )
