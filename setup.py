@@ -17,7 +17,6 @@ setup(
         "beautifulsoup4",
         "cchardet",
         "colorlog",
-        "discord",
         "matplotlib",
         "motor",
         "Pillow",
@@ -26,6 +25,6 @@ setup(
         "wordcloud",
     ],
     dependency_links=[
-        "https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord"
+        "https://github.com/Rapptz/discord.py/archive/rewrite.zip"
     ]
 )
