@@ -331,7 +331,11 @@ class Draw:
                        mask=mask)
 
         await add_embed(ctx.message, description="creating word cloud!", colour=Colours.INFO)
-        wc.generate(text)
+        try:
+            wc.generate(text)
+        except ValueError:
+            await add_embed(ctx.message, description="Not enough text found", colour=Colours.ERROR)
+            return
 
         img = wc.to_image()
         img_file = io.BytesIO()

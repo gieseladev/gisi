@@ -112,7 +112,7 @@ class Text:
                     current_string += part
                 else:
                     current_string += char
-            text = current_string
+            text = "".join(stack) + current_string
         return text
 
     @group(invoke_without_command=True)
