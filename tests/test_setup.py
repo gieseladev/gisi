@@ -4,7 +4,8 @@ import os
 import pytest
 
 
-def pytest_sessionstart(session):
+@pytest.fixture(scope="session", autouse=True)
+def session_start():
     from gisi.constants import FileLocations
     config = {
         "token": os.environ["DISCORD_TOKEN"],
