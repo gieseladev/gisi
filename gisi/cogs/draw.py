@@ -75,7 +75,7 @@ class Draw:
     @group(invoke_without_command=True)
     async def fonts(self, ctx):
         """Haven't you ever wanted to mess with fonts?"""
-        fonts = [name.rpartition(".")[0].replace("_", " ").title() for name in os.listdir(FileLocations.FONTS)]
+        fonts = sorted([name.rpartition(".")[0].replace("_", " ").title() for name in os.listdir(FileLocations.FONTS)])
         description = text_utils.code("\n".join(fonts), "css")
         await add_embed(ctx.message, title="Available Fonts", description=description, colour=Colours.INFO)
 
@@ -175,10 +175,11 @@ class Draw:
                     return
                 name = font.rpartition(".")[0].replace("_", " ").title()
                 font_set.add((name, font))
-            fonts = list(sorted(font_set))
+            fonts = sorted(font_set)
         else:
-            fonts = [(name.rpartition(".")[0].replace("_", " ").title(), f"{FileLocations.FONTS}/{name}") for name in
-                     os.listdir(FileLocations.FONTS)]
+            fonts = sorted(
+                [(name.rpartition(".")[0].replace("_", " ").title(), f"{FileLocations.FONTS}/{name}") for name in
+                 os.listdir(FileLocations.FONTS)])
 
         images = []
         for font_chunk in chunks(fonts, 10):
