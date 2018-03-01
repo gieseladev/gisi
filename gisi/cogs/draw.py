@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import random
+import re
 from os import path
 
 import aiohttp
@@ -77,6 +78,83 @@ class Draw:
         fonts = [name.rpartition(".")[0].replace("_", " ").title() for name in os.listdir(FileLocations.FONTS)]
         description = text_utils.code("\n".join(fonts), "css")
         await add_embed(ctx.message, title="Available Fonts", description=description, colour=Colours.INFO)
+
+    @fonts.command("add", usage="[url] [flags...]")
+    async def add_font(self, ctx, *flags):
+        """Add a font to Gisi's repertoire
+        Instead of providing the url of a font you may attach it to your message.
+
+        Flags:
+          -n | name for the new font
+        """
+        flags = FlagConverter.from_spec(flags)
+        font_io = io.BytesIO()
+        font_name = flags.get("n", None)
+
+        if ctx.message.attachments:
+            attachment = ctx.message.attachments[0]
+            await attachment.save(font_io)
+            if not font_name:
+                font_name = attachment.filename
+        else:
+            url = await flags.convert_dis(0, ctx, UrlConverter, default=None)
+            if not url:
+                await add_embed(ctx.message, description="Please either attach or provide the url to a truetype font",
+                                colour=Colours.ERROR)
+                return
+            try:
+                async with self.bot.aiosession.get(url) as resp:
+                    resp.raise_for_status()
+                    font_io.write(await resp.read())
+                    if not font_name:
+                        if resp.content_disposition:
+                            font_name = resp.content_disposition.filename
+                        if not font_name:
+                            font_name = resp.url.name
+            except (aiohttp.ClientResponseError, aiohttp.ClientConnectorError):
+                await add_embed(ctx.message, description=f"Couldn't read font from url!", colour=Colours.ERROR)
+                return
+
+        if not font_name:
+            await add_embed(ctx.message, description="Couldn't figure out the font's name", colour=Colours.ERROR)
+            return
+        else:
+            font_name = re.split(r"\W", font_name)[0].lower()
+
+        if Draw.get_font(font_name, default=False):
+            await add_embed(ctx.message, description=f"There's already a font with the name \"{font_name.title()}\"",
+                            colour=Colours.ERROR)
+            return
+
+        font_io.seek(0)
+        try:
+            ImageFont.FreeTypeFont(font_io)
+        except IOError:
+            await add_embed(ctx.message, description="This doesn't seem to be a valid font file...",
+                            colour=Colours.ERROR)
+            return
+
+        font_io.seek(0)
+        with open(f"{FileLocations.FONTS}/{font_name}.otf", "w+b") as f:
+            f.write(font_io.read())
+        await add_embed(ctx.message, description=f"Added new font \"{text_utils.bold(font_name.title())}\"",
+                        colour=Colours.SUCCESS)
+
+    @fonts.command("remove")
+    async def remove_font(self, ctx, font):
+        """Remove a font"""
+        font_file = Draw.get_font(font, default=False)
+        if not font_file:
+            await add_embed(ctx.message, description="This font doesn't even exist...", colour=Colours.ERROR)
+            return
+
+        if len(os.listdir(FileLocations.FONTS)) <= 1:
+            await add_embed(ctx.message, description="You mustn't delete this font as it is your only one",
+                            colour=Colours.ERROR)
+            return
+
+        os.remove(font_file)
+        await add_embed(ctx.message, description=f"Deleted font \"{font.title()}\"", colour=Colours.SUCCESS)
 
     @fonts.command("show")
     async def font_show(self, ctx, *fonts):

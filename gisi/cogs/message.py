@@ -33,7 +33,7 @@ class Message:
         await add_embed(ctx.message, author=message.author, description=message.content, colour=Colours.INFO,
                         timestamp=message.created_at)
 
-    @command(usage="[content] [flags]")
+    @command(usage="[content] [flags...]")
     async def embed(self, ctx, *flags):
         """Make an embed
 
