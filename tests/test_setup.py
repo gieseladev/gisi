@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -17,13 +18,10 @@ def session_start():
 
 
 @pytest.mark.asyncio
-async def test_setup():
-    import gisi
-    gisi.Gisi()
-
-
-@pytest.mark.asyncio
 async def test_login():
     import gisi
     g = gisi.Gisi()
-    await g.run()
+    try:
+        await asyncio.wait(g.run(), timeout=5)
+    except asyncio.TimeoutError:
+        pass
