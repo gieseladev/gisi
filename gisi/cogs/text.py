@@ -63,17 +63,20 @@ class Text:
         return replacement
 
     async def replace_text(self, text, require_wrapping=True):
-        prog = re.compile(r"(?<!\\)-(.+)-" if require_wrapping else r"(\w+)")
+        if text_utils.is_code_block(text):
+            return text
+
+        simple_re = re.compile(r"(?<!\\)\-(\w+)\-" if require_wrapping else r"(\w+)")
+        combined_open, combined_close = "<>"
 
         start = 0
         while True:
-            match = prog.search(text, start)
+            match = simple_re.search(text, start)
             if not match:
                 break
             start = match.end()
-            key, *args = shlex.split(match.group(1))
-            key = key.lower()
-            new = await self.get_replacement(key, args)
+            key = match.group(1).lower()
+            new = await self.get_replacement(key, ())
             if not new:
                 continue
             pre = text[:match.start()]
@@ -81,6 +84,35 @@ class Text:
             new = text_utils.escape(new)
             text = f"{pre}{new}{after}"
 
+        if require_wrapping:
+            stack = []
+            current_string = ""
+            escape = False
+            for ind, char in enumerate(text):
+                if escape:
+                    escape = False
+                    continue
+                elif char is "\\":
+                    escape = True
+                    continue
+
+                if char is combined_open:
+                    stack.append(current_string)
+                    current_string = combined_open
+                elif char is combined_close:
+                    current_string += combined_close
+                    part = current_string
+                    new = None
+                    if part and part.startswith(combined_open):
+                        key, *args = shlex.split(part[1:-1])
+                        key = key.lower()
+                        new = await self.get_replacement(key, args)
+                    part = new or part
+                    current_string = stack.pop() if stack else ""
+                    current_string += part
+                else:
+                    current_string += char
+            text = current_string
         return text
 
     @group(invoke_without_command=True)

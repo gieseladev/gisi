@@ -29,6 +29,11 @@ quote = partial(wrap, wrap=QUOTE_CHAR)
 escape_url = partial(wrap, wrap=URL_ESCAPE_SEQ)
 
 
+def is_code_block(s):
+    s = s.strip()
+    return s.startswith(CODE_SEQ) and s.endswith(CODE_SEQ)
+
+
 def code(s, lang=""):
     """Put it in a code block."""
     return f"{CODE_SEQ}{lang}\n{s}{CODE_SEQ}"
