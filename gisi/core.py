@@ -95,11 +95,13 @@ class Core:
         filters = {
             "min_version": flags.convert("v", version.VersionStamp.from_timestamp, None),
             "min_type": flags.convert("t", lambda t: version.ChangeType[t.upper()], None),
-            "max_entries": flags.convert("n", int, 10)
+            "max_entries": flags.convert("n", int, None)
         }
 
         if not any(filters.values()):
             filters["min_version"] = version.VersionStamp.from_timestamp(Info.version)
+
+        filters["max_entries"] = filters["max_entries"] or 10
 
         changelog = await version.get_changelog(self.bot.aiosession)
         filtered = list(changelog.filter_history(**filters))
@@ -109,8 +111,8 @@ class Core:
         every_embed = Embed(colour=Colours.INFO)
         paginator = EmbedPaginator(every_embed=every_embed)
         for entry in filtered:
-            paginator.add_field(name=entry.version.timestamp,
-                                value=f"{text_utils.bold(entry.change_type.name)}\n{entry.change}")
+            paginator.add_field(name=entry.change,
+                                value=f"`{entry.version.timestamp}` | {entry.change_type.name.lower()}")
 
         embeds = paginator.embeds
         for embed in embeds:

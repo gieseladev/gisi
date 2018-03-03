@@ -171,7 +171,7 @@ class Draw:
             for name in fonts:
                 font = Draw.get_font(name, default=None)
                 if not font:
-                    await add_embed(ctx.message, description=f"There's no font \"{font_name}\"", colour=Colours.ERROR)
+                    await add_embed(ctx.message, description=f"There's no font \"{name}\"", colour=Colours.ERROR)
                     return
                 name = font.rpartition(".")[0].replace("_", " ").title()
                 font_set.add((name, font))

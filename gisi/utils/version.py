@@ -95,15 +95,15 @@ class Changelog:
 
     def filter_history(self, *, min_version=None, max_entries=None, min_type=None):
         entries = []
-        for entry in reversed(self.history):
+        for entry in self.history:
             if min_version and min_version >= entry.version:
-                continue
+                break
             if min_type and entry.change_type < min_type:
                 continue
             entries.append(entry)
             if max_entries and len(entries) >= max_entries:
                 break
-        return reversed(entries)
+        return entries
 
 
 async def get_changelog(session):

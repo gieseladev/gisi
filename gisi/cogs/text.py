@@ -75,13 +75,15 @@ class Text:
             if not match:
                 break
             start = match.end()
+            if text_utils.in_code_block(start, text):
+                continue
             key = match.group(1).lower()
             new = await self.get_replacement(key, ())
             if not new:
                 continue
             pre = text[:match.start()]
             after = text[match.end():]
-            new = text_utils.escape(new)
+            new = text_utils.escape_if_needed(new, start, text)
             text = f"{pre}{new}{after}"
 
         if require_wrapping:
@@ -90,9 +92,11 @@ class Text:
             escape = False
             for ind, char in enumerate(text):
                 if escape:
+                    current_string += char
                     escape = False
                     continue
-                elif char is "\\":
+                elif char is text_utils.ESCAPE_CHAR:
+                    current_string += char
                     escape = True
                     continue
 
@@ -107,6 +111,7 @@ class Text:
                         key, *args = shlex.split(part[1:-1])
                         key = key.lower()
                         new = await self.get_replacement(key, args)
+                        new = text_utils.escape_if_needed(new, ind, text)
                     part = new or part
                     current_string = stack.pop() if stack else ""
                     current_string += part
