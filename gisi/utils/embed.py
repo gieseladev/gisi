@@ -22,8 +22,8 @@ def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
                  description=f"type: **{exc_type}**\nmessage:```\n{exc_msg}```\n\ntraceback:```\n{formatted_tb}```")
 
 
-async def add_embed(msg, *, author=None, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed,
-                    timestamp=EmptyEmbed):
+async def add_embed(msg, *, author=None, image=None, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed,
+                    timestamp=EmptyEmbed, footer_text=EmptyEmbed, footer_icon=EmptyEmbed):
     em = Embed(title=title, description=description, colour=colour, timestamp=timestamp)
     if author:
         if isinstance(author, (Member, User)):
@@ -32,6 +32,9 @@ async def add_embed(msg, *, author=None, title=EmptyEmbed, description=EmptyEmbe
                 "icon_url": author.avatar_url
             }
         em.set_author(**author)
+    if image:
+        em.set_image(url=image)
+    em.set_footer(text=footer_text, icon_url=footer_icon)
     await msg.edit(embed=em)
 
 

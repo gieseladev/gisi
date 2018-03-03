@@ -10,7 +10,9 @@ from discord import Embed, File
 from discord.ext.commands import group
 
 from gisi import SetDefaults
-from gisi.utils import EmbedPaginator, copy_embed, extract_keys, maybe_extract_keys, text_utils
+from gisi.constants import Colours
+from gisi.utils import EmbedPaginator, FlagConverter, add_embed, copy_embed, extract_keys, maybe_extract_keys, \
+    text_utils
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +22,9 @@ class Google:
 
     Just like Gisi!
     """
+
+    GOOGLE_ICON = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Google-favicon-2015.png/150px-Google-favicon-2015.png"
+    SEARCH_ICON = "http://www.pvhc.net/img207/bydtkmqbpsmeqcgkgidx.png"
 
     def __init__(self, bot):
         self.bot = bot
@@ -40,35 +45,49 @@ class Google:
         every_embed = Embed(colour=random.choice([0x3cba54, 0xf4c20d, 0xdb3236, 0x4885ed]))
         first_embed = copy_embed(every_embed)
         first_embed.set_author(name=query, url=f"https://www.google.com/search?q={urllib.parse.quote(query)}",
-                               icon_url="http://www.pvhc.net/img207/bydtkmqbpsmeqcgkgidx.png")
+                               icon_url=self.SEARCH_ICON)
         paginator = EmbedPaginator(first_embed=first_embed, every_embed=every_embed)
         for item in result:
             snippet = text_utils.escape(text_utils.fit_sentences(item.snippet, max_length=200))
             paginator.add_field(item.title, f"[{item.link}]({item.link})\n{text_utils.italic(snippet)}\n{line}")
 
         embeds = paginator.embeds
-        embeds[-1].set_footer(text="search",
-                              icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Google-favicon-2015.png/150px-Google-favicon-2015.png")
+        embeds[-1].set_footer(text="search", icon_url=self.GOOGLE_ICON)
         for em in embeds:
             await ctx.send(embed=em)
 
         await ctx.message.edit(content=f"{content} (done!)")
 
-    @search.command()
-    async def images(self, ctx, *, query):
-        """Search for images."""
-        content = f"{ctx.invocation_content} `{query}`"
-        await ctx.message.edit(content=f"{content} (searching...)")
+    @search.command(usage="<query> [flags...]")
+    async def image(self, ctx, *flags):
+        """Search for images.
+
+        Flags:
+          -m | Show more than one image
+        """
+        flags = FlagConverter.from_spec(flags)
+        query = flags.get(0, None)
+        if not query:
+            await add_embed(ctx.message, description=f"Please provide a search query!", colour=Colours.ERROR)
+            return
+
+        await add_embed(ctx.message, description=f"searching...", colour=Colours.INFO)
         result = await self.cse.search_images(query)
-        await ctx.message.edit(content=f"{content} (generating image...)")
-        im = await result.create_image(self.aiosession)
-        im_data = BytesIO()
-        im.save(im_data, "PNG")
-        im_data.seek(0)
-        file = File(im_data, f"result.png")
-        await ctx.message.edit(content=f"{content} (sending...)")
-        await ctx.send(file=file)
-        await ctx.message.edit(content=f"{content} (done!)")
+
+        if flags.get("m", False):
+            await add_embed(ctx.message, description=f"generating image...", colour=Colours.INFO)
+            im = await result.create_image(self.aiosession)
+            im_data = BytesIO()
+            im.save(im_data, "PNG")
+            im_data.seek(0)
+            file = File(im_data, f"result.png")
+            await add_embed(ctx.message, description=f"uploading...", colour=Colours.INFO)
+            await ctx.send(file=file)
+            await add_embed(ctx.message, description=f"done", colour=Colours.SUCCESS)
+        else:
+            img = result.items[0].image.thumbnail_link
+            await add_embed(ctx.message, image=img, footer_text="search", footer_icon=self.GOOGLE_ICON,
+                            colour=Colours.SUCCESS)
 
 
 def setup(bot):
@@ -218,7 +237,8 @@ class CSEResultItem:
 
 
 class CSEImage:
-    def __init__(self, contextLink, height, width, byteSize, thumbnailLink, thumbnailHeight, thumbnailWidth):
+    def __init__(self, contextLink, height, width, byteSize, thumbnailLink, thumbnailHeight,
+                 thumbnailWidth):
         self.context_Link = contextLink
         self.height = height
         self.width = width

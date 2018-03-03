@@ -24,7 +24,7 @@ SAMPLE_SENTENCES = (
     "The five boxing wizards jump quickly",
     "Sphinx of black quartz, judge my vow",
     "Pack my box with five dozen liquor jugs",
-    "\"Gisi\" isn't a pangram but looks cool"
+    "\"Gisi\" isn't a pangram but it looks cool"
 )
 
 

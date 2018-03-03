@@ -58,7 +58,7 @@ class FontManager:
         return f"FontManager"
 
     def __iter__(self):
-        return iter(self.fonts)
+        return iter(self.fonts.values())
 
     @staticmethod
     def load_font(location, *, name=None):
