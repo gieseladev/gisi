@@ -16,9 +16,7 @@ class UrlConverter(Converter):
         url = argument.strip("<>")
         if not re.match(self.scheme_check, url):
             url = f"http://{url}"
-        try:
-            validators.url(url)
-        except validators.ValidationFailure:
+        if not validators.url(url):
             raise BadArgument(f"\"{url}\" isn't a valid url!")
         return url
 
