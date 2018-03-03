@@ -1,10 +1,7 @@
 import codecs
 import io
 import logging
-import os
 import random
-import re
-from os import path
 
 import aiohttp
 import matplotlib.cm as colour_map
@@ -15,8 +12,9 @@ from discord import File, User
 from discord.ext.commands import ColourConverter, group
 from wordcloud import ImageColorGenerator, WordCloud
 
-from gisi.constants import Colours, FileLocations
-from gisi.utils import FlagConverter, UrlConverter, add_embed, chunks, text_utils
+from gisi import Gisi
+from gisi.constants import Colours
+from gisi.utils import FlagConverter, UrlConverter, add_embed, chunks, download_font, text_utils
 
 log = logging.getLogger(__name__)
 _default = object()
@@ -25,15 +23,17 @@ SAMPLE_SENTENCES = (
     "Two driven jocks help fax my big quiz",
     "The five boxing wizards jump quickly",
     "Sphinx of black quartz, judge my vow",
-    "Pack my box with five dozen liquor jugs"
+    "Pack my box with five dozen liquor jugs",
+    "\"Gisi\" isn't a pangram but looks cool"
 )
 
 
 class Draw:
     """You can draw but so can Gisi!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: Gisi):
         self.bot = bot
+        self.font_manager = bot.fonts
 
     @staticmethod
     def get_size(text: str, font: ImageFont):
@@ -45,22 +45,6 @@ class Draw:
             height += line_h
             width = max(line_w, width)
         return width, height
-
-    @staticmethod
-    def get_font(name=None, *, default=_default, pick_random=True):
-        if name and name.lower():
-            name = name.lower().replace(" ", "_")
-            font_path = f"{FileLocations.FONTS}/{name}.otf"
-            if path.isfile(font_path):
-                return font_path
-
-        if default is not _default:
-            return default
-        elif pick_random:
-            font = random.choice(os.listdir(FileLocations.FONTS))
-            font_path = f"{FileLocations.FONTS}/{font}"
-            return font_path
-        return False
 
     async def get_image(self, url):
         try:
@@ -75,7 +59,7 @@ class Draw:
     @group(invoke_without_command=True)
     async def fonts(self, ctx):
         """Haven't you ever wanted to mess with fonts?"""
-        fonts = sorted([name.rpartition(".")[0].replace("_", " ").title() for name in os.listdir(FileLocations.FONTS)])
+        fonts = [font.name for font in self.font_manager]
         description = text_utils.code("\n".join(fonts), "css")
         await add_embed(ctx.message, title="Available Fonts", description=description, colour=Colours.INFO)
 
@@ -93,68 +77,49 @@ class Draw:
 
         if ctx.message.attachments:
             attachment = ctx.message.attachments[0]
-            await attachment.save(font_io)
-            if not font_name:
-                font_name = attachment.filename
+            url = attachment.url
         else:
             url = await flags.convert_dis(0, ctx, UrlConverter, default=None)
-            if not url:
-                await add_embed(ctx.message, description="Please either attach or provide the url to a truetype font",
-                                colour=Colours.ERROR)
-                return
-            try:
-                async with self.bot.aiosession.get(url) as resp:
-                    resp.raise_for_status()
-                    font_io.write(await resp.read())
-                    if not font_name:
-                        if resp.content_disposition:
-                            font_name = resp.content_disposition.filename
-                        if not font_name:
-                            font_name = resp.url.name
-            except (aiohttp.ClientResponseError, aiohttp.ClientConnectorError):
-                await add_embed(ctx.message, description=f"Couldn't read font from url!", colour=Colours.ERROR)
-                return
-
-        if not font_name:
-            await add_embed(ctx.message, description="Couldn't figure out the font's name", colour=Colours.ERROR)
-            return
-        else:
-            font_name = re.split(r"\W", font_name)[0].lower()
-
-        if Draw.get_font(font_name, default=False):
-            await add_embed(ctx.message, description=f"There's already a font with the name \"{font_name.title()}\"",
+        if not url:
+            await add_embed(ctx.message, description="Please either attach or provide the url to a truetype font",
                             colour=Colours.ERROR)
             return
-
-        font_io.seek(0)
         try:
-            ImageFont.FreeTypeFont(font_io)
-        except IOError:
+            font_name, font_io = await download_font(self.bot.aiosession, url, name=font_name)
+        except ValueError:
+            await add_embed(ctx.message, description=f"Couldn't read font from url!", colour=Colours.ERROR)
+            return
+        except TypeError:
             await add_embed(ctx.message, description="This doesn't seem to be a valid font file...",
                             colour=Colours.ERROR)
             return
 
-        font_io.seek(0)
-        with open(f"{FileLocations.FONTS}/{font_name}.otf", "w+b") as f:
-            f.write(font_io.read())
+        if not font_name:
+            await add_embed(ctx.message, description="Couldn't figure out the font's name", colour=Colours.ERROR)
+            return
+
+        try:
+            self.font_manager.add(font_name, font_io)
+        except ValueError:
+            await add_embed(ctx.message, description=f"There's already a font with the name \"{font_name.title()}\"",
+                            colour=Colours.ERROR)
+            return
+
         await add_embed(ctx.message, description=f"Added new font \"{text_utils.bold(font_name.title())}\"",
                         colour=Colours.SUCCESS)
 
     @fonts.command("remove")
     async def remove_font(self, ctx, font):
         """Remove a font"""
-        font_file = Draw.get_font(font, default=False)
-        if not font_file:
+
+        try:
+            self.font_manager.remove(font)
+        except KeyError:
             await add_embed(ctx.message, description="This font doesn't even exist...", colour=Colours.ERROR)
-            return
-
-        if len(os.listdir(FileLocations.FONTS)) <= 1:
-            await add_embed(ctx.message, description="You mustn't delete this font as it is your only one",
-                            colour=Colours.ERROR)
-            return
-
-        os.remove(font_file)
-        await add_embed(ctx.message, description=f"Deleted font \"{font.title()}\"", colour=Colours.SUCCESS)
+        except ValueError:
+            await add_embed(ctx.message, description="You mustn't delete the default font!", colour=Colours.ERROR)
+        else:
+            await add_embed(ctx.message, description=f"Deleted font \"{font.title()}\"", colour=Colours.SUCCESS)
 
     @fonts.command("show")
     async def font_show(self, ctx, *fonts):
@@ -169,26 +134,23 @@ class Draw:
         if fonts:
             font_set = set()
             for name in fonts:
-                font = Draw.get_font(name, default=None)
+                font = self.font_manager.get(name, default=None)
                 if not font:
                     await add_embed(ctx.message, description=f"There's no font \"{name}\"", colour=Colours.ERROR)
                     return
-                name = font.rpartition(".")[0].replace("_", " ").title()
-                font_set.add((name, font))
+                font_set.add(font)
             fonts = sorted(font_set)
         else:
-            fonts = sorted(
-                [(name.rpartition(".")[0].replace("_", " ").title(), f"{FileLocations.FONTS}/{name}") for name in
-                 os.listdir(FileLocations.FONTS)])
+            fonts = sorted(self.font_manager.fonts.values(), key=lambda f: f.name)
 
         images = []
         for font_chunk in chunks(fonts, 10):
             samples = []
             width = 0
             height = 0
-            for name, font in font_chunk:
-                title_font = ImageFont.truetype(font=font, size=24)
-                text_font = ImageFont.truetype(font=font, size=16)
+            for name, loc in font_chunk:
+                title_font = ImageFont.truetype(font=loc, size=24)
+                text_font = ImageFont.truetype(font=loc, size=16)
                 sample = random.choice(SAMPLE_SENTENCES)
 
                 n_width, n_height = Draw.get_size(name, title_font)
@@ -237,7 +199,7 @@ class Draw:
         text = codecs.unicode_escape_decode(text)[0]
         flags = FlagConverter.from_spec(flags)
 
-        font = Draw.get_font(flags.get("f", None))
+        font = (self.font_manager.get(flags.get("f", ""), False) or self.font_manager.random()).location
 
         if "c" in flags:
             colour = await self.get_image(flags.get("c", None))
@@ -300,7 +262,7 @@ class Draw:
         WC_WIDTH = 600
         WC_HEIGHT = 400
 
-        font = Draw.get_font(flags.get("f", default=None))
+        font = (self.font_manager.get(flags.get("f", ""), False) or self.font_manager.random()).location
         try:
             colourmap = colour_map.get_cmap(flags.get("c", None))
         except ValueError:
@@ -394,7 +356,7 @@ class Draw:
         async with self.bot.aiosession.get(url) as resp:
             content_type = resp.content_type
             if not content_type.startswith("text"):
-                await add_embed(description="Can't extract any words from \"{url}\"", colour=Colours.ERROR)
+                await add_embed(ctx.message, description="Can't extract any words from \"{url}\"", colour=Colours.ERROR)
                 return
             text = await resp.text()
 

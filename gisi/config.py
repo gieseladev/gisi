@@ -13,7 +13,10 @@ class Defaults:
 
     webhook_url = None
 
+    default_font = "arial"
 
+
+# noinspection PyPep8Naming
 def SetDefaults(defaults: dict):
     for key, value in defaults.items():
         setattr(Defaults, key, value)

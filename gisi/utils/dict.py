@@ -1,4 +1,4 @@
-from collections import Iterable, MutableMapping
+from collections import Iterable, Mapping, MutableMapping
 
 
 def extract_keys(d, *keys):
@@ -18,6 +18,15 @@ def maybe_extract_keys(d, keys):
         except KeyError:
             new[key] = keys[key]
     return new
+
+
+class JsonObject(dict):
+    def __getattr__(self, item):
+        obj = self[item]
+        if isinstance(obj, Mapping):
+            return JsonObject(obj)
+        else:
+            return obj
 
 
 class MultiDict(MutableMapping):

@@ -8,8 +8,8 @@ from aiohttp import ClientSession
 from discord import Embed, File
 from discord.ext.commands import command
 
-from gisi import SetDefaults
-from gisi.constants import Colours, FileLocations
+from gisi import Gisi, SetDefaults
+from gisi.constants import Colours
 from gisi.utils import chunks, extract_keys
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class WolframAlpha:
     What do you mean that doesn't suffice as a description?
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: Gisi):
         self.bot = bot
         self.aiosession = bot.aiosession
         self.wolfram_client = Client(self.bot.config.wolfram_app_id, aiosession=self.aiosession)
@@ -42,7 +42,7 @@ class WolframAlpha:
             return
 
         await ctx.message.edit(content=f"{content} (generating image...)")
-        imgs = await doc.create_images(self.aiosession)
+        imgs = await doc.create_images(self.aiosession, font=self.bot.fonts.default)
         await ctx.message.edit(content=f"{content} (processing image...)")
         files = []
         for n, im in enumerate(imgs):
@@ -145,7 +145,7 @@ class Document:
         images = await asyncio.gather(*tasks)
         return [im for pod_imgs in images for im in pod_imgs]
 
-    async def create_images(self, session):
+    async def create_images(self, session, *, font):
         min_saturation_for_colour = .175
 
         max_height_per_image = 750
@@ -153,7 +153,7 @@ class Document:
         vertical_padding = 40
         after_text_padding = 6
         after_image_padding = 15
-        doc_font = ImageFont.truetype(f"{FileLocations.FONTS}/arial.ttf", 17)
+        doc_font = ImageFont.truetype(font.location, 17)
 
         images = await self.get_images(session)
         max_width = max(im.width for im in images)

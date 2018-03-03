@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import textwrap
 import traceback
 
@@ -7,7 +8,7 @@ from discord import Embed
 from discord.ext.commands import command
 
 from gisi.constants import Colours
-from gisi.utils import hastebin, text_utils
+from gisi.utils import github, text_utils
 
 log = logging.getLogger(__name__)
 
@@ -75,9 +76,10 @@ class Programming:
             except TypeError:
                 raw_result = result = str(ret)
             if len(result) > 1024:
-                link = await hastebin.upload(self.aiosession, raw_result)
-                em.url = link
-                result = f"The result is too big. [Here's a link to Hastebin]({link})"
+                gist = await github.create_gist(self.aiosession, f"Result for:\n{ctx.clean_content}",
+                                                {"result.json": raw_result})
+                em.url = gist.html_url
+                result = f"The result is too big. [Here's a link to a Gist]({gist.html_url})"
             em.add_field(
                 name="Result",
                 value=result
@@ -85,8 +87,9 @@ class Programming:
         if out:
             result = "\n".join(out)
             if len(result) > 1024:
-                link = await hastebin.upload(self.aiosession, result)
-                result = f"The Output is too big. [Here's a link to Hastebin]({link})"
+                gist = await github.create_gist(self.aiosession, f"Console output for:\n{ctx.clean_content}",
+                                                {"output.txt": result})
+                result = f"The Output is too big. [Here's a link to a Gist]({gist.html_url})"
             em.add_field(
                 name="Output",
                 value=result
@@ -100,10 +103,67 @@ def setup(bot):
 
 
 class BeautyFormatter(json.JSONEncoder):
-    def default(self, o):
-        try:
-            d = vars(o)
-        except Exception:
-            return str(o)
+    MASK = 8 * "*"
+    VALUES_RE = re.compile(r"^(?:\d[ -]*?){13,16}$")
+    KEYS = frozenset([
+        "password",
+        "secret",
+        "passwd",
+        "authorization",
+        "api_key",
+        "apikey",
+        "sentry_dsn",
+        "access_token",
+        "token",
+        "webhook_url",
+        "mongodb_uri"
+    ])
+
+    def stringify(self, item, value):
+        value = str(value)
+        if not item:
+            return value
+
+        if isinstance(item, bytes):
+            item = item.decode("utf-8", "replace")
         else:
-            return {key: str(value) for key, value in d.items()}
+            item = str(item)
+
+        item = item.lower()
+        for key in self.KEYS:
+            if key in item:
+                # store mask as a fixed length for security
+                return self.MASK
+
+        if isinstance(value, str) and self.VALUES_RE.match(value):
+            return self.MASK
+        return value
+
+    def default(self, o, key=None, n=0, visited=None):
+        if n > 1:
+            return self.stringify(key, o)
+        visited = visited or []
+        if o in visited:
+            return self.stringify(key, o)
+
+        visited.append(o)
+        try:
+            if isinstance(o, dict):
+                d = o
+            else:
+                d = vars(o)
+        except Exception:
+            return self.stringify(key, o)
+        else:
+            obj = {}
+            for key, value in d.items():
+                if not key.startswith("__"):
+                    try:
+                        value = self.default(value, key=key, n=n + 1, visited=visited)
+                    except Exception:
+                        value = self.stringify(key, value)
+                else:
+                    value = self.stringify(key, value)
+                visited.append(value)
+                obj[key] = value
+            return obj

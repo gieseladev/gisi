@@ -5,6 +5,7 @@ cchardet
 colorlog
 matplotlib
 motor
+numpy
 Pillow
 selenium
 validators
