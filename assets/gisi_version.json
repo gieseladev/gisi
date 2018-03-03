@@ -1,9 +1,19 @@
 {
   "current_version": {
-    "version": "2018.03.03-1401",
+    "version": "2018.03.03-1813",
     "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.03-1813",
+      "type": "MINOR_FEATURE",
+      "change": "Show an overwhelming amount of information."
+    },
+    {
+      "version": "2018.03.03-1731",
+      "type": "BUGFIX",
+      "change": "Hastebin is down, switched to Gist."
+    },
     {
       "version": "2018.03.03-1401",
       "type": "BUGFIX",
