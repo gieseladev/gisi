@@ -5,6 +5,16 @@
   },
   "history": [
     {
+      "version": "2018.03.03-1840",
+      "type": "MINOR_FEATURE",
+      "change": "Image search returns one image."
+    },
+    {
+      "version": "2018.03.03-1825",
+      "type": "BUGFIX",
+      "change": "fixed fonts command."
+    },
+    {
       "version": "2018.03.03-1813",
       "type": "MINOR_FEATURE",
       "change": "Show an overwhelming amount of information."
