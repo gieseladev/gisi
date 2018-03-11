@@ -1,8 +1,9 @@
-import traceback
 from os import path
 
+import traceback
 from discord import Embed, Member, User
 from discord.embeds import EmptyEmbed
+from discord.ext.commands import Context
 
 from gisi.constants import Colours
 
@@ -24,6 +25,10 @@ def create_exception_embed(exc_type, exc_msg, exc_tb, tb_limit=None):
 
 async def add_embed(msg, *, author=None, image=None, title=EmptyEmbed, description=EmptyEmbed, colour=EmptyEmbed,
                     timestamp=EmptyEmbed, footer_text=EmptyEmbed, footer_icon=EmptyEmbed):
+    if colour is True:
+        colour = Colours.SUCCESS
+    elif colour is False:
+        colour = Colours.ERROR
     em = Embed(title=title, description=description, colour=colour, timestamp=timestamp)
     if author:
         if isinstance(author, (Member, User)):
@@ -35,6 +40,8 @@ async def add_embed(msg, *, author=None, image=None, title=EmptyEmbed, descripti
     if image:
         em.set_image(url=image)
     em.set_footer(text=footer_text, icon_url=footer_icon)
+    if isinstance(msg, Context):
+        msg = msg.message
     await msg.edit(embed=em)
 
 

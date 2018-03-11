@@ -20,13 +20,49 @@ def maybe_extract_keys(d, keys):
     return new
 
 
-class JsonObject(dict):
+class _NullObject:
+    def __repr__(self):
+        return "undefined"
+
+    def __getitem__(self, item):
+        return self
+
     def __getattr__(self, item):
-        obj = self[item]
+        return self
+
+    def __bool__(self):
+        return False
+
+
+NullObject = _NullObject()
+
+
+class JsonList(list):
+    def __iter__(self):
+        return iter([self[i] for i in range(len(self))])
+
+    def __getitem__(self, item):
+        obj = super().__getitem__(item)
         if isinstance(obj, Mapping):
             return JsonObject(obj)
+        elif isinstance(obj, list):
+            return JsonList(obj)
         else:
             return obj
+
+
+class JsonObject(dict):
+    def __getitem__(self, item):
+        obj = super().__getitem__(item)
+        if isinstance(obj, Mapping):
+            return JsonObject(obj)
+        elif isinstance(obj, list):
+            return JsonList(obj)
+        else:
+            return obj
+
+    def __getattr__(self, item):
+        return self.__getitem__(item)
 
 
 class MultiDict(MutableMapping):

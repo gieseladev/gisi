@@ -1,6 +1,6 @@
-import logging
 from io import BytesIO
 
+import logging
 from aiohttp import ClientConnectorError, ClientResponseError
 from discord import Embed, File
 from discord.ext.commands import command
@@ -36,8 +36,11 @@ class Web:
                         embed_image_url = resp.url
                         break
         except ClientResponseError as e:
-            await ctx.message.edit(content=f"<{url}> **isn't a valid url ({e.code}: {e.message})**")
-            return
+            if e.code in (405,):
+                log.warning(f"{e.code} on {url}... I'm just going to ignore it...")
+            else:
+                await ctx.message.edit(content=f"<{url}> **isn't a valid url ({e.code}: {e.message})**")
+                return
         # Invalid URL is derived from ValueError
         except (ValueError, ClientConnectorError):
             await ctx.message.edit(content=f"<{url}> **isn't a valid url**")
