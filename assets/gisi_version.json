@@ -1,9 +1,19 @@
 {
   "current_version": {
-    "version": "2018.03.03-1813",
+    "version": "2018.03.13-1914",
     "name": "Navi"
   },
   "history": [
+    {
+      "version": "2018.03.13-1914",
+      "type": "MAJOR_FEATURE",
+      "change": "Wikipedia extension partially done."
+    },
+    {
+      "version": "2018.03.12-1854",
+      "type": "MINOR_FEATURE",
+      "change": "Improved eval security."
+    },
     {
       "version": "2018.03.03-1840",
       "type": "MINOR_FEATURE",
