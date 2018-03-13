@@ -70,14 +70,17 @@ def escape_if_needed(s, pos, text):
         return escape(s)
 
 
+sentence_splitter = re.compile(r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[\.\?])\s")
+
+
 def fit_sentences(text, max_length=None, max_sentences=None, at_least_one=True):
-    sentences = text.split(".")
+    sentences = sentence_splitter.split(text)
     new_sentences = [sentences.pop(0)] if at_least_one else []
     for sentence in sentences:
         if max_sentences and len(new_sentences) >= max_sentences:
             break
-        if max_length and len(".".join(new_sentences)) + len(sentence) + 1 > max_length:
+        if max_length and len(" ".join(new_sentences)) + len(sentence) > max_length:
             break
         new_sentences.append(sentence)
 
-    return ".".join(new_sentences) + "."
+    return " ".join(new_sentences)

@@ -104,8 +104,10 @@ def setup(bot):
 
 class BeautyFormatter(json.JSONEncoder):
     MASK = 8 * "*"
+
     VALUES_RE = re.compile(r"^(?:\d[ -]*?){13,16}$")
-    KEYS = frozenset([
+    VALUES = []
+    KEYS = [
         "password",
         "secret",
         "passwd",
@@ -117,41 +119,43 @@ class BeautyFormatter(json.JSONEncoder):
         "token",
         "webhook_url",
         "mongodb_uri"
-    ])
+    ]
 
-    def stringify(self, item, value):
-        value = str(value)
-        if not item:
-            return value
+    def stringify(self, key: str, value: str, *, shallow: bool = False):
+        if key:
+            key = str(key).lower()
+            for target_key in self.KEYS:
+                if target_key in key:
+                    return self.MASK
 
-        if isinstance(item, bytes):
-            item = item.decode("utf-8", "replace")
+        if shallow:
+            if isinstance(value, (dict, list)):
+                value = type(value).__name__
         else:
-            item = str(item)
+            if isinstance(value, dict):
+                value = {key: self.stringify(key, value, shallow=True) for key, value in value.items()}
+            elif isinstance(value, list):
+                value = {key: self.stringify(key, value, shallow=True) for value in value}
 
-        item = item.lower()
-        for key in self.KEYS:
-            if key in item:
-                # store mask as a fixed length for security
-                return self.MASK
-
-        if isinstance(value, str) and self.VALUES_RE.match(value):
+        value = str(value)
+        if self.VALUES_RE.match(value):
             return self.MASK
+        for target_value in self.VALUES:
+            if target_value in value:
+                return self.MASK
         return value
 
-    def default(self, o, key=None, n=0, visited=None):
-        if n > 1:
-            return self.stringify(key, o)
+    def default(self, o, key=None, n=3, visited=None):
+        if n <= 0:
+            return self.stringify(key, o, shallow=True)
         visited = visited or []
         if o in visited:
-            return self.stringify(key, o)
+            return self.stringify(key, o, shallow=True)
+        else:
+            visited.append(o)
 
-        visited.append(o)
         try:
-            if isinstance(o, dict):
-                d = o
-            else:
-                d = vars(o)
+            d = vars(o)
         except Exception:
             return self.stringify(key, o)
         else:
@@ -159,11 +163,11 @@ class BeautyFormatter(json.JSONEncoder):
             for key, value in d.items():
                 if not key.startswith("__"):
                     try:
-                        value = self.default(value, key=key, n=n + 1, visited=visited)
+                        value = self.default(value, key=key, n=n - 1, visited=visited)
                     except Exception:
-                        value = self.stringify(key, value)
+                        value = self.stringify(key, value, shallow=True)
                 else:
-                    value = self.stringify(key, value)
+                    value = self.stringify(key, value, shallow=True)
                 visited.append(value)
                 obj[key] = value
             return obj

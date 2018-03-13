@@ -1,15 +1,18 @@
+import asyncio
 import functools
+import random
 import re
 from collections import OrderedDict
-
-import asyncio
-from aiohttp import ClientSession
-from bs4 import BeautifulSoup
-from discord.ext.commands import Context, command
 from typing import Any, Callable, Optional
 
+from aiohttp import ClientSession
+from bs4 import BeautifulSoup
+from discord import Embed
+from discord.ext.commands import Context, command
+
 from gisi import Gisi
-from gisi.utils import FlagConverter, JsonObject, add_embed
+from gisi.constants import Colours
+from gisi.utils import EmbedPaginator, FlagConverter, JsonObject, add_embed, text_utils
 
 
 class Wikipedia:
@@ -22,28 +25,90 @@ class Wikipedia:
 
     @command(usage="<query> [flags...]")
     async def wiki(self, ctx: Context, *flags):
+        """Wiki the duck out of something"""
         flags = FlagConverter.from_spec(flags)
         query = flags.get(0, None)
         if not query:
             await add_embed(ctx, description="Please provide a search query", colour=False)
             return
-        page = await self.wiki_api.get(query)
-        print(await page.summary)
-        print(await page.images)
+        try:
+            page = await self.wiki_api.get(query)
+        except DisambiguationError as e:
+            titles_num = 15
+            may_refer_to = random.sample(e.may_refer_to, titles_num) if len(
+                e.may_refer_to) > titles_num else e.may_refer_to
+            titles = "\n".join(map("  - {0}".format, may_refer_to))
+            await add_embed(ctx, title=f"Couldn't find a page \"{e.title}\"",
+                            description=f"\nPossible articles:\n{titles}", colour=False)
+            return
+
+        desc = text_utils.fit_sentences(await page.markdown_summary, EmbedPaginator.MAX_TOTAL)
+
+        em = Embed(title=page.title, description=desc, url=page.url, colour=Colours.INFO)
+        img = await page.thumbnail
+        if img:
+            em.set_image(url=img)
+        await ctx.message.edit(embed=em)
 
 
 def setup(bot: Gisi):
     bot.add_cog(Wikipedia(bot))
 
 
+class WikipediaException(Exception):
+    pass
+
+
+class DisambiguationError(WikipediaException):
+    def __init__(self, title, may_refer_to):
+        self.title = title
+        self.may_refer_to = may_refer_to
+
+
 class WikipediaAPI:
+    WIKI_URL = "https://{lang}.wikipedia.org"
     API_URL = "https://{lang}.wikipedia.org/w/api.php"
 
     def __init__(self, aiosession: ClientSession, *, lang: str = None):
         self.lang = lang.lower() if lang else "en"
         self.aiosession = aiosession
 
-    async def get(self, title, **kwargs):
+    async def search(self, query: str, results: int = 10, suggestion=True):
+        params = {
+            "list": "search",
+            "srprop": 1,
+            "srlimit": results,
+            "limit": results,
+            "srsearch": query
+        }
+        if suggestion:
+            params["srinfo"] = "suggestion"
+
+        resp = await self.request(**params)
+
+        if "error" in resp:
+            if resp.error.info in ("HTTP request timed out.", "Pool queue is full"):
+                raise TimeoutError(query)
+            else:
+                raise WikipediaException(resp.error.info)
+
+        search_results = [d.title for d in resp.query.search]
+
+        if suggestion:
+            if "searchinfo" in resp.query:
+                return search_results, resp.query.searchinfo.suggestion
+            else:
+                return search_results, None
+
+        return search_results
+
+    async def get(self, title: str, suggest=True, **kwargs):
+        if suggest:
+            results, suggestion = await self.search(title, results=1, suggestion=True)
+            try:
+                title = suggestion or results[0]
+            except IndexError:
+                raise WikipediaException(title)
         return await WikipediaPage.load(self, title=title, **kwargs)
 
     async def request(self, *, action: str = "query", lang: str = None, **kwargs):
@@ -86,10 +151,13 @@ def cached_async_property(func: Callable):
 
 
 class WikipediaPage:
-    def __init__(self, api: WikipediaAPI, title: str, pageid: int):
+    def __init__(self, api: WikipediaAPI, title: str, pageid: int, language: str, url: str = None):
         self.api = api
         self.title = title
         self.pageid = pageid
+        self.language = language
+        self.WIKI_URL = api.WIKI_URL.format(lang=language)
+        self.url = url or f"{self.WIKI_URL}/{title}"
 
     def __repr__(self):
         return f"Page {self.pageid}: {self.title}"
@@ -157,11 +225,11 @@ class WikipediaPage:
             filtered_lis = [li for li in lis if "tocsection" not in "".join(li.get("class", []))]
             may_refer_to = [li.a.get_text() for li in filtered_lis if li.a]
 
-            raise ValueError(title or page.title, may_refer_to)
+            raise DisambiguationError(title or page.title, may_refer_to)
         else:
             title = page.title
 
-        page = cls(api, title, pageid)
+        page = cls(api, title, pageid, page.pagelanguage, page.fullurl)
         if preload:
             tasks = []
             for prop in ("content", "summary", "images", "references", "links", "sections"):
@@ -205,6 +273,20 @@ class WikipediaPage:
             last_continue = resp["continue"]
 
     @cached_async_property
+    async def html(self):
+        params = {
+            "pageid": self.pageid,
+            "prop": "text",
+            "disabletoc": 1,
+            "disableeditsection": 1,
+            "disablelimitreport": 1,
+            "disablestylededuplication": 1,
+            "disabletidy": 1
+        }
+        resp = await self.api.request(action="parse", **params)
+        return resp.parse.text
+
+    @cached_async_property
     async def content(self):
         resp = await self.request(prop="extracts", explaintext=1)
         return next(page for page in resp.query.pages if page.pageid == self.pageid).extract
@@ -221,6 +303,47 @@ class WikipediaPage:
         return next(page for page in resp.query.pages if page.pageid == self.pageid).extract
 
     @cached_async_property
+    async def markdown_summary(self):
+        bs = BeautifulSoup(await self.html, "html.parser").div
+        for el in bs.find_all("div"):
+            el.extract()
+        links = bs.find_all("a")
+        desc = await self.summary
+
+        for link in links:
+            if not link.text:
+                continue
+            url = link["href"]
+            if url.startswith("/"):
+                url = self.WIKI_URL + url
+            if url.startswith("//"):
+                url = "https:" + url
+            elif url.startswith("#"):
+                url = self.url + url
+            elif not url.startswith(("http://", "https://")):
+                url = "http://" + url
+            url = url.replace(")", "\\)")
+            url = url.replace("(", "\\(")
+            desc = re.sub(r"(?<=[^\[\(])\b" + link.text + r"\b(?=[^\]\)]|$)", f"[{link.string}]({url})", desc)
+        return desc
+
+    async def summarise(self, sentences=0, chars=0):
+        params = {
+            "prop": "extracts",
+            "explaintext": 1
+        }
+
+        if sentences:
+            params["exsentences"] = sentences
+        elif chars:
+            params["exchars"] = chars
+        else:
+            params["exintro"] = 1
+
+        resp = await self.request(**params)
+        return next(page for page in resp.query.pages if page.pageid == self.pageid).extract
+
+    @cached_async_property
     async def images(self):
         params = {
             "generator": "images",
@@ -230,6 +353,19 @@ class WikipediaPage:
         }
         pages = self.continued_request(**params)
         return [page.imageinfo[0].url async for page in pages if "imageinfo" in page]
+
+    @cached_async_property
+    async def thumbnail(self):
+        params = {
+            "prop": "pageimages",
+            "pithumbsize": 512
+        }
+        resp = await self.request(**params)
+        page = next(page for page in resp.query.pages if page.pageid == self.pageid)
+        if "thumbnail" not in page:
+            return next(filter(lambda url: url.endswith((".jpg", ".png")), await self.images), None)
+
+        return page.thumbnail.source
 
     @cached_async_property
     async def coordinates(self):
@@ -287,7 +423,7 @@ class WikipediaPage:
         resp = await self.request(**params)
         return [section.line for section in resp.parse.sections]
 
-    async def section(self, section_title):
+    async def section(self, section_title: str):
         section = f"== {section_title} =="
         try:
             index = self.content.index(section) + len(section)
