@@ -27,7 +27,13 @@ class Programming:
         To be honest it actually executes them but uhm... bite me!
         """
         inst = textwrap.indent(ctx.clean_content, "\t")
-        statement = f"out = []\ndef print(*args):\n\tout.append(\" \".join(str(arg) for arg in args))\nasync def func():\n{inst}"
+        statement = (
+            "out = []\n"
+            "def print(*args):\n"
+            "\tout.append(\" \".join(str(arg) for arg in args))\n"
+            "async def func():"
+            f"{inst}"
+        )
         env = {**globals(), **locals()}
 
         em = Embed(
