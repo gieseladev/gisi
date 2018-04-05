@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.03.13-1914",
-    "name": "Navi"
+    "version": "2018.04.05-1447",
+    "name": "Clow"
   },
   "history": [
+    {
+      "version": "2018.04.05-1447",
+      "type": "MINOR_FEATURE",
+      "change": "Some cleaning up and a very rough Eventory integration."
+    },
     {
       "version": "2018.03.13-1914",
       "type": "MAJOR_FEATURE",
