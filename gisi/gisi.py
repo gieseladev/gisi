@@ -1,3 +1,5 @@
+import asyncio
+import atexit
 import logging
 import os
 import time
@@ -81,12 +83,66 @@ class Gisi(AutoShardedBot):
         self._signal = signal
         await self.logout()
 
+    async def blocking_dispatch(self, event, *args, **kwargs):
+        method = f"on_{event}"
+        handler = f"handle_{event}"
+        tasks = []
+
+        listeners = self._listeners.get(event)
+        if listeners:
+            removed = []
+            for i, (future, condition) in enumerate(listeners):
+                if future.cancelled():
+                    removed.append(i)
+                    continue
+
+                try:
+                    result = condition(*args)
+                except Exception as e:
+                    future.set_exception(e)
+                    removed.append(i)
+                else:
+                    if result:
+                        if len(args) == 0:
+                            future.set_result(None)
+                        elif len(args) == 1:
+                            future.set_result(args[0])
+                        else:
+                            future.set_result(args)
+                        removed.append(i)
+
+            if len(removed) == len(listeners):
+                self._listeners.pop(event)
+            else:
+                for idx in reversed(removed):
+                    del listeners[idx]
+
+        try:
+            actual_handler = getattr(self, handler)
+        except AttributeError:
+            pass
+        else:
+            actual_handler(*args, **kwargs)
+
+        try:
+            coro = getattr(self, method)
+        except AttributeError:
+            pass
+        else:
+            tasks.append(asyncio.ensure_future(self._run_event(coro, method, *args, **kwargs), loop=self.loop))
+
+        for event in self.extra_events.get(method, []):
+            coro = self._run_event(event, event, *args, **kwargs)
+            tasks.append(asyncio.ensure_future(coro, loop=self.loop))
+        await asyncio.gather(*tasks, loop=self.loop)
+
     async def logout(self):
         log.info("logging out")
-        self.dispatch("logout")
+        await self.blocking_dispatch("logout")
         await super().logout()
 
     async def run(self):
+        atexit.register(self.loop.run_until_complete, self.logout())
         return await self.start(self.config.token, bot=False)
 
     async def on_ready(self):

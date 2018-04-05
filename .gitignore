@@ -1,5 +1,6 @@
 *.pyc
 .idea/
+.pytest_cache/
 venv/
 gh-pages/
 logs/*.log
@@ -7,3 +8,5 @@ logs/*.log
 data/config.json
 
 geckodriver.exe
+inklecate.exe
+ink-engine-runtime.dll

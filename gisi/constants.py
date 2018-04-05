@@ -2,8 +2,8 @@ class Info:
     name = "Gisi"
     desc = "A *cough* tiny Discord self-bot"
 
-    version = "2018.03.13-1914"
-    version_name = "Navi"
+    version = "2018.04.05-1447"
+    version_name = "Clow"
     release = "alpha"
 
 

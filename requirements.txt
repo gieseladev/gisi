@@ -3,10 +3,11 @@ aiohttp
 beautifulsoup4
 cchardet
 colorlog
+https://github.com/siku2/Eventory/archive/master.zip
 matplotlib
 motor
 numpy
-Pillow
+pillow
 selenium
 validators
 wordcloud

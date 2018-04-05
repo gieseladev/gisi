@@ -3,7 +3,6 @@ import json
 import logging
 import logging.config
 
-
 log = logging.getLogger("gisi")
 
 
@@ -29,11 +28,11 @@ def main():
                     break
             else:
                 log.info("No signal found... Restarting!")
+        except KeyboardInterrupt:
+            log.warning("shutting down")
+            break
         except BaseException as e:
             raise
-    log.warning("exiting!")
-    loop.stop()
-    loop.close()
 
 
 if __name__ == "__main__":

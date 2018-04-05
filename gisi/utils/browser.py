@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
@@ -66,13 +67,21 @@ class WebDriver:
             options = FirefoxOptions()
             options.set_headless()
             self.driver = Firefox(firefox_profile=profile, firefox_options=options, log_path=FileLocations.GECKO_LOG)
+            atexit.register(self.close)
             log.debug(f"spawned driver {self.driver}")
 
     def close(self):
         if not self.driver:
             return
-        log.debug(f"killed driver {self.driver}")
-        self.driver.close()
+        try:
+            self.driver.close()
+        except ConnectionRefusedError:
+            log.warning("No idea what exactly happened, but couldn't close driver!")
+        else:
+            log.debug(f"killed driver {self.driver}")
+        finally:
+            self.driver = None
+            atexit.unregister(self.close)
 
     @run_in_executor
     def get(self, url):

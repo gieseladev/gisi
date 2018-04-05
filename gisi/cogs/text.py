@@ -111,7 +111,8 @@ class Text:
                         key, *args = shlex.split(part[1:-1])
                         key = key.lower()
                         new = await self.get_replacement(key, args)
-                        new = text_utils.escape_if_needed(new, ind, text)
+                        if new:
+                            new = text_utils.escape_if_needed(new, ind, text)
                     part = new or part
                     current_string = stack.pop() if stack else ""
                     current_string += part
