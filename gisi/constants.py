@@ -15,6 +15,7 @@ class FileLocations:
 
     COGS = "gisi/cogs"
     FONTS = "data/fonts"
+    EVENTORY = "data/eventory"
 
 
 class Colours:
