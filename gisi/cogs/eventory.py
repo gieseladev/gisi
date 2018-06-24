@@ -4,7 +4,7 @@ from eventory.ext.discord import EventoryCog
 
 from gisi.constants import FileLocations
 
-eventory.load_ext("inktory")
+# eventory.load_ext("inktory")
 
 
 def setup(bot: Bot):

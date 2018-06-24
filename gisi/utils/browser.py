@@ -1,5 +1,4 @@
 import asyncio
-import atexit
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
@@ -8,7 +7,7 @@ from io import BytesIO
 from threading import Lock
 
 from PIL import Image
-from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
+from selenium.webdriver import Chrome, ChromeOptions
 
 from gisi.constants import FileLocations
 
@@ -61,13 +60,13 @@ class WebDriver:
             if self.driver:
                 return
             log.debug("spawning driver...")
-            profile = FirefoxProfile()
             ua = self.user_agent.value if isinstance(self.user_agent, UserAgents) else str(self.user_agent)
-            profile.set_preference("general.useragent.override", ua)
-            options = FirefoxOptions()
+            options = ChromeOptions()
             options.set_headless()
-            self.driver = Firefox(firefox_profile=profile, firefox_options=options, log_path=FileLocations.GECKO_LOG)
-            atexit.register(self.close)
+            options.add_argument(f"user-agent={ua}")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            self.driver = Chrome(options=options, service_log_path=FileLocations.WEBDRIVER_LOG)
             log.debug(f"spawned driver {self.driver}")
 
     def close(self):
@@ -81,7 +80,6 @@ class WebDriver:
             log.debug(f"killed driver {self.driver}")
         finally:
             self.driver = None
-            atexit.unregister(self.close)
 
     @run_in_executor
     def get(self, url):

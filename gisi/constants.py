@@ -9,9 +9,8 @@ class Info:
 
 class FileLocations:
     CONFIG = "data/config.json"
-    LOGGING = "data/logging.json"
 
-    GECKO_LOG = "logs/gecko.log"
+    WEBDRIVER_LOG = "logs/webdriver.log"
 
     COGS = "gisi/cogs"
     FONTS = "data/fonts"

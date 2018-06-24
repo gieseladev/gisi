@@ -1,12 +1,13 @@
+import logging
 from io import BytesIO
 
-import logging
 from aiohttp import ClientConnectorError, ClientResponseError
 from discord import Embed, File
 from discord.ext.commands import command
 
 from gisi.constants import Colours
 from gisi.utils import UrlConverter
+from gisi.utils.browser import UserAgents
 
 log = logging.getLogger(__name__)
 
@@ -26,8 +27,7 @@ class Web:
         """
         await ctx.message.edit(content=f"checking {url}...")
         try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
+            headers = {"User-Agent": UserAgents.DESKTOP.value}
             async with self.bot.aiosession.head(url, headers=headers, allow_redirects=True) as resp:
                 resp.raise_for_status()
                 embed_image_url = None

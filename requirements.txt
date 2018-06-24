@@ -1,9 +1,7 @@
 aiodns
 aiohttp
 beautifulsoup4
-cchardet
 colorlog
-https://github.com/siku2/Eventory/archive/master.zip
 matplotlib
 motor
 numpy
@@ -12,4 +10,5 @@ selenium
 validators
 wordcloud
 
+https://github.com/siku2/Eventory/archive/master.zip
 https://github.com/Rapptz/discord.py/archive/rewrite.zip
