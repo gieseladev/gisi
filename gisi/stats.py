@@ -1,4 +1,5 @@
-from collections import OrderedDict
+import logging
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from io import BytesIO
 
@@ -8,15 +9,22 @@ import matplotlib.ticker as ticker
 
 plt.style.use("fivethirtyeight")
 
+log = logging.getLogger(__name__)
+
 
 class Statistics:
     def __init__(self, bot):
         self.bot = bot
+        self.events = defaultdict(int)
+        self._last_update = datetime.min
         self.storage = bot.mongo_db.statistics
 
-    async def trigger_event(self, event):
-        pass
-        # await self.storage.update_one({"_id": event}, {"$push": {"occurrences": datetime.utcnow()}}, upsert=True)
+    def trigger_event(self, event):
+        self.events[event] += 1
+        if datetime.now() > (self._last_update + self.bot.config.SEND_STATS_INTERVAL):
+            log.info(f"sending stats: {len(self.events)} events, {sum(self.events.values())} total occurrences")
+            self._last_update = datetime.now()
+            self.events.clear()
 
     async def count_events(self, event, timestep=86400, start=None, end=None):
         occurrences = OrderedDict()

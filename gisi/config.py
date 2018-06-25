@@ -21,6 +21,8 @@ class Defaults:
 
     DEFAULT_FONT = "arial"
 
+    SEND_STATS_INTERVAL = 60 * 60
+
 
 def set_defaults(defaults: dict):
     for key, value in defaults.items():

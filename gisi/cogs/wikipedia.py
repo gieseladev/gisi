@@ -42,7 +42,7 @@ class Wikipedia:
                             description=f"\nPossible articles:\n{titles}", colour=False)
             return
 
-        desc = text_utils.fit_sentences(await page.markdown_summary, EmbedPaginator.MAX_TOTAL)
+        desc = text_utils.fit_sentences(await page.markdown_summary, EmbedPaginator.MAX_FIELD_VALUE)
 
         em = Embed(title=page.title, description=desc, url=page.url, colour=Colours.INFO)
         img = await page.thumbnail
@@ -148,6 +148,18 @@ def async_property(func: Callable):
 
 def cached_async_property(func: Callable):
     return async_property(cached(func))
+
+
+def add_protocol(url: str, base_url: str, rel_url: str) -> str:
+    if url.startswith("/"):
+        url = base_url + url
+    if url.startswith("//"):
+        url = "https:" + url
+    elif url.startswith("#"):
+        url = rel_url + url
+    elif not url.startswith(("http://", "https://")):
+        url = "http://" + url
+    return url if url.startswith("http") else "http:" + url
 
 
 class WikipediaPage:
@@ -313,18 +325,14 @@ class WikipediaPage:
         for link in links:
             if not link.text:
                 continue
-            url = link["href"]
-            if url.startswith("/"):
-                url = self.WIKI_URL + url
-            if url.startswith("//"):
-                url = "https:" + url
-            elif url.startswith("#"):
-                url = self.url + url
-            elif not url.startswith(("http://", "https://")):
-                url = "http://" + url
+            try:
+                url = link["href"]
+            except KeyError:
+                continue
+            url = add_protocol(url, self.WIKI_URL, self.url)
             url = url.replace(")", "\\)")
             url = url.replace("(", "\\(")
-            desc = re.sub(r"(?<=[^\[\(])\b" + link.text + r"\b(?=[^\]\)]|$)", f"[{link.string}]({url})", desc)
+            desc = re.sub(r"(?<=[^\[(])\b" + re.escape(link.text) + r"\b(?=[^\])]|$)", f"[{link.string}]({url})", desc)
         return desc
 
     async def summarise(self, sentences=0, chars=0):
@@ -383,15 +391,12 @@ class WikipediaPage:
 
     @cached_async_property
     async def references(self):
-        def add_protocol(url):
-            return url if url.startswith("http") else "http:" + url
-
         params = {
             "prop": "extlinks",
             "ellimit": "max"
         }
         links = self.continued_request(**params)
-        return [add_protocol(link.url) async for link in links]
+        return [add_protocol(link.url, self.WIKI_URL, self.url) async for link in links]
 
     @cached_async_property
     async def links(self):
