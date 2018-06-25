@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict, defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import matplotlib.dates as mdates
@@ -19,9 +19,10 @@ class Statistics:
         self._last_update = datetime.min
         self.storage = bot.mongo_db.statistics
 
-    def trigger_event(self, event):
+    async def trigger_event(self, event):
         self.events[event] += 1
-        if datetime.now() > (self._last_update + self.bot.config.SEND_STATS_INTERVAL):
+        next_update = (self._last_update + timedelta(seconds=self.bot.config.SEND_STATS_INTERVAL))
+        if datetime.now() > next_update:
             log.info(f"sending stats: {len(self.events)} events, {sum(self.events.values())} total occurrences")
             self._last_update = datetime.now()
             self.events.clear()
