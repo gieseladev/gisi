@@ -67,22 +67,14 @@ class Config:
             try:
                 return literal_eval(os.environ[key])
             except (KeyError, SyntaxError):
-                return getattr(Defaults, key)
+                default = getattr(Defaults, key)
+                if default == MUST_SET:
+                    log.error(f"Key \"{key}\" missing in config!")
+                    raise KeyError(f"Key \"{key}\" must be set but isn't!") from None
+                return default
 
     def set(self, key: str, value: Any):
         if not hasattr(Defaults, key):
             raise KeyError(f"Key not in Defaults! ({key})")
         self.config[key] = value
         self.save()
-
-
-def extract_env(config: Config):
-    env = os.environ
-    for key, default_value in vars(Defaults).items():
-        value = env.get(key)
-        if value:
-            value = literal_eval(value)
-            config.config[key] = value
-        elif default_value == MUST_SET:
-            if key not in config.config:
-                raise KeyError(f"Key {key} missing in environment variables!")

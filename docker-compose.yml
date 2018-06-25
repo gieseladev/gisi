@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  gisi:
+    container_name: Gisi
+    image: siku2/gisi
+    build: .
+    restart: always
+    volumes:
+      - gisi:/gisi/data
+      - gisi:/gisi/logs
+    networks:
+      - backend
+    environment:
+      - TOKEN
+      - MONGO_URI
+      - WEBHOOK_URL
+      - GOOGLE_API_KEY
+      - SENTRY_DSN
+  mongodb:
+    container_name: MongoDB
+    image: mongo
+    restart: always
+    networks:
+      - backend
+    volumes:
+      - db:/data/db
+      - db:/data/configdb
+
+volumes:
+  db: {}
+  gisi: {}
+
+networks:
+  backend: {}

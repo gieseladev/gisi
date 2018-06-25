@@ -147,7 +147,10 @@ class Gisi(AutoShardedBot):
     async def logout(self):
         log.info("logging out")
         await self.blocking_dispatch("logout")
-        await super().logout()
+        try:
+            await super().logout()
+        except ValueError:
+            log.warning("Couldn't logout. Probably didn't start correctly")
 
     async def run(self):
         atexit.register(self.loop.run_until_complete, self.logout())
@@ -159,6 +162,6 @@ class Gisi(AutoShardedBot):
         log.info("ready!")
 
     async def on_logout(self):
-        log.debug("closing stuff")
+        log.debug("closing sessions")
         await self.aiosession.close()
         self.webdriver.close()
