@@ -5,6 +5,11 @@
   },
   "history": [
     {
+      "version": "2018.06.25-1527",
+      "type": "MAJOR_FEATURE",
+      "change": "Containerised Gisi!"
+    },
+    {
       "version": "2018.04.05-1447",
       "type": "MINOR_FEATURE",
       "change": "Some cleaning up and a very rough Eventory integration."
