@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.06.25-2019",
+    "version": "2018.06.25-2055",
     "name": "Corta"
   },
   "history": [
+    {
+      "version": "2018.06.25-2055",
+      "type": "MINOR_FEATURE",
+      "change": "Added and config fix docker-compose.yml"
+    },
     {
       "version": "2018.06.25-2019",
       "type": "BUGFIX",
