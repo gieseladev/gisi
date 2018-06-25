@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.06.25-2055",
+    "version": "2018.06.25-2120",
     "name": "Corta"
   },
   "history": [
+    {
+      "version": "2018.06.25-2120",
+      "type": "BUGFIX",
+      "change": "Stupid fix for stats crash"
+    },
     {
       "version": "2018.06.25-2055",
       "type": "MINOR_FEATURE",
