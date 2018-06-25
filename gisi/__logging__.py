@@ -45,7 +45,7 @@ CONFIG = {
     },
 
     "root": {
-        "level": "WARN",
+        "level": "WARNING",
         "handlers": ["console", "file"]
     }
 }

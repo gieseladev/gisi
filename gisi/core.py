@@ -187,7 +187,7 @@ class Core:
         log.info(f"triggered command {ctx.command}")
 
     async def on_error(self, event_method, *args, **kwargs):
-        log.exception("Client error")
+        log.exception("Client error", exc_info=True)
         if self.bot.webhook:
             args = "\n".join([f"{arg}" for arg in args])
             kwargs = "\n".join([f"{key}: {value}" for key, value in kwargs.items()])
@@ -202,7 +202,7 @@ class Core:
             log.debug(f"ignoring unknown command {context.message.content}")
             return
 
-        log.error(f"Command error {context} / {exception}")
+        log.error(f"Command error {context} / {exception}", exc_info=True)
 
         if self.bot.webhook:
             ctx_em = Embed(title="Context Info", timestamp=datetime.now(), colour=Colours.ERROR_INFO,

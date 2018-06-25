@@ -237,8 +237,7 @@ class CSEResultItem:
 
 
 class CSEImage:
-    def __init__(self, contextLink, height, width, byteSize, thumbnailLink, thumbnailHeight,
-                 thumbnailWidth):
+    def __init__(self, contextLink, height, width, byteSize, thumbnailLink, thumbnailHeight, thumbnailWidth):
         self.context_Link = contextLink
         self.height = height
         self.width = width

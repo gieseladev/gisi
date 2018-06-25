@@ -3,6 +3,5 @@
 .pytest_cache/
 venv/
 gh-pages/
-logs/
 
 data/config.json
