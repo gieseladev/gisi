@@ -31,13 +31,13 @@ COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./requirements.txt ./
 RUN pip install -r requirements.txt
 
+VOLUME /gisi/logs
+VOLUME /gisi/data
+
 COPY gisi /gisi/gisi
 COPY run.py /gisi/
 COPY data /gisi/data
 RUN mkdir /gisi/logs
-
-VOLUME /gisi/logs
-VOLUME /gisi/data
 
 COPY .docker/start.sh /start.sh
 RUN chmod +x /start.sh
