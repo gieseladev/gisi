@@ -36,7 +36,7 @@ VOLUME /gisi/data
 
 COPY gisi /gisi/gisi
 COPY run.py /gisi/
-COPY data /gisi/data
+COPY data /gisi/_data
 
 COPY .docker/start.sh /start.sh
 RUN chmod +x /start.sh
