@@ -25,3 +25,4 @@ async def test_login():
         await asyncio.wait_for(g.run(), timeout=5)
     except asyncio.TimeoutError:
         pass
+    await g.logout()
