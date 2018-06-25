@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.06.25-1527",
-    "name": "Clow"
+    "version": "2018.06.25-2019",
+    "name": "Corta"
   },
   "history": [
+    {
+      "version": "2018.06.25-2019",
+      "type": "BUGFIX",
+      "change": "Cleaning up... You know, like always"
+    },
     {
       "version": "2018.06.25-1527",
       "type": "MAJOR_FEATURE",
