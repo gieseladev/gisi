@@ -92,7 +92,7 @@ class Programming:
         if out:
             result = "\n".join(out)
             if len(result) > 1024:
-                haste_url = await hastebin.post(self.aiosession, str(result))                                 
+                haste_url = await hastebin.post(self.aiosession, str(result))
                 result = f"The Output is too big. [Here's a link to a Hastebin]({haste_url})"
             em.add_field(
                 name="Output",
@@ -122,7 +122,7 @@ class BeautyFormatter(json.JSONEncoder):
         "access_token",
         "token",
         "webhook_url",
-        "mongodb_uri"
+        "mongo_uri"
     ]
 
     def stringify(self, key: str, value: str, *, shallow: bool = False):

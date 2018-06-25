@@ -99,7 +99,7 @@ class MultiDict(MutableMapping):
             self._length += 1
 
     def __delitem__(self, key):
-        for index, (keys, value) in enumerate(self._items):
+        for index, (keys, _) in enumerate(self._items):
             if key in keys:
                 break
         else:
@@ -108,7 +108,7 @@ class MultiDict(MutableMapping):
         self._length -= 1
 
     def __iter__(self):
-        for keys, value in self._items:
+        for keys, _ in self._items:
             yield keys
 
     def __len__(self):

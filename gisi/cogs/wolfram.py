@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 from discord import Embed, File
 from discord.ext.commands import command
 
-from gisi import Gisi, SetDefaults
+from gisi import Gisi, set_defaults
 from gisi.constants import Colours
 from gisi.utils import chunks, extract_keys
 
@@ -24,7 +24,7 @@ class WolframAlpha:
     def __init__(self, bot: Gisi):
         self.bot = bot
         self.aiosession = bot.aiosession
-        self.wolfram_client = Client(self.bot.config.wolfram_app_id, aiosession=self.aiosession)
+        self.wolfram_client = Client(self.bot.config.WOLFRAM_APP_ID, aiosession=self.aiosession)
 
     @command()
     async def ask(self, ctx, *, query):
@@ -61,8 +61,8 @@ class WolframAlpha:
 
 
 def setup(bot):
-    SetDefaults({
-        "wolfram_app_id": "EH8PUT-35T4RK4AVL"
+    set_defaults({
+        "WOLFRAM_APP_ID": "EH8PUT-35T4RK4AVL"
     })
     bot.add_cog(WolframAlpha(bot))
 

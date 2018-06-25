@@ -2,7 +2,7 @@ import logging
 
 from discord.ext.commands import group
 
-from gisi import SetDefaults
+from gisi import set_defaults
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class Grammar:
 
 
 def setup(bot):
-    SetDefaults({
+    set_defaults({
         "grammar_check_enabled": False
     })
     bot.add_cog(Grammar(bot))

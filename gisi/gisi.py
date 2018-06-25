@@ -8,6 +8,9 @@ from aiohttp import ClientSession
 from discord import AsyncWebhookAdapter, Status, Webhook
 from discord.ext.commands import AutoShardedBot
 from motor.motor_asyncio import AsyncIOMotorClient
+from raven import Client
+from raven.conf import setup_logging
+from raven.handlers.logging import SentryHandler
 
 from .config import Config
 from .constants import FileLocations, Info
@@ -17,6 +20,11 @@ from .stats import Statistics
 from .utils import FontManager, WebDriver
 
 log = logging.getLogger(__name__)
+
+sentry_client = Client(release=Info.version)
+handler = SentryHandler(sentry_client)
+handler.setLevel(logging.ERROR)
+setup_logging(handler)
 
 
 async def before_invoke(ctx):
@@ -29,7 +37,7 @@ class Gisi(AutoShardedBot):
 
     def __init__(self):
         self.config = Config.load()
-        super().__init__(self.config.command_prefix,
+        super().__init__(self.config.COMMAND_PREFIX,
                          description=Info.desc,
                          self_bot=True)
 
@@ -38,18 +46,17 @@ class Gisi(AutoShardedBot):
 
         self._before_invoke = before_invoke
 
-        self.mongo_client = AsyncIOMotorClient(self.config.mongodb_uri)
-        self.mongo_db = self.mongo_client[Info.name.lower()]
+        self.mongo_client = AsyncIOMotorClient(self.config.MONGO_URI)
+        self.mongo_db = self.mongo_client[self.config.MONGO_DATABASE]
         self.aiosession = ClientSession(headers={
             "User-Agent": f"{Info.name}/{Info.version}"
         }, loop=self.loop)
         self.webdriver = WebDriver(kill_on_exit=False)
-        self.webhook = Webhook.from_url(self.config.webhook_url, adapter=AsyncWebhookAdapter(
-            self.aiosession)) if self.config.webhook_url else None
+        self.webhook = Webhook.from_url(self.config.WEBHOOK_URL, adapter=AsyncWebhookAdapter(self.aiosession)) if self.config.WEBHOOK_URL else None
 
         self.statistics = Statistics(self)
-        self.fonts = FontManager(self)
         self.add_cog(self.statistics)
+        self.fonts = FontManager(self)
         self.add_cog(Core(self))
 
         self.unloaded_extensions = []
@@ -143,7 +150,7 @@ class Gisi(AutoShardedBot):
 
     async def run(self):
         atexit.register(self.loop.run_until_complete, self.logout())
-        return await self.start(self.config.token, bot=False)
+        return await self.start(self.config.TOKEN, bot=False)
 
     async def on_ready(self):
         await self.change_presence(status=Status.idle, afk=True)

@@ -15,7 +15,8 @@ class Statistics:
         self.storage = bot.mongo_db.statistics
 
     async def trigger_event(self, event):
-        await self.storage.update_one({"_id": event}, {"$push": {"occurrences": datetime.utcnow()}}, upsert=True)
+        pass
+        # await self.storage.update_one({"_id": event}, {"$push": {"occurrences": datetime.utcnow()}}, upsert=True)
 
     async def count_events(self, event, timestep=86400, start=None, end=None):
         occurrences = OrderedDict()

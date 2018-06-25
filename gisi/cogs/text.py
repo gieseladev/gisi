@@ -11,7 +11,7 @@ import pymongo.errors
 from discord import Embed
 from discord.ext.commands import group
 
-from gisi import SetDefaults
+from gisi import set_defaults
 from gisi.constants import Colours
 from gisi.utils import text_utils
 
@@ -292,7 +292,7 @@ class Text:
 
 
 def setup(bot):
-    SetDefaults({
+    set_defaults({
         "replacer_enabled": True
     })
     bot.add_cog(Text(bot))

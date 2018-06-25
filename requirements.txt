@@ -6,6 +6,7 @@ matplotlib
 motor
 numpy
 pillow
+raven
 selenium
 validators
 wordcloud

@@ -7,7 +7,8 @@ import aiohttp
 import matplotlib.cm as colour_map
 import numpy
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
-from bs4 import BeautifulSoup, Comment
+from bs4 import BeautifulSoup
+from bs4.element import Comment
 from discord import File, User
 from discord.ext.commands import ColourConverter, group
 from wordcloud import ImageColorGenerator, WordCloud
@@ -72,7 +73,6 @@ class Draw:
           -n | name for the new font
         """
         flags = FlagConverter.from_spec(flags)
-        font_io = io.BytesIO()
         font_name = flags.get("n", None)
 
         if ctx.message.attachments:

@@ -8,4 +8,5 @@ from gisi.constants import FileLocations
 
 
 def setup(bot: Bot):
-    bot.add_cog(EventoryCog(bot, directory=FileLocations.EVENTORY))
+    # bot.add_cog(EventoryCog(bot, directory=FileLocations.EVENTORY))
+    pass

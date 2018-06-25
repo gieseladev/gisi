@@ -51,7 +51,7 @@ class FontManager:
     def __init__(self, bot):
         self.bot = bot
         self.fonts = FontManager.load_fonts()
-        self.default = self.fonts[bot.config.default_font]
+        self.default = self.fonts[bot.config.DEFAULT_FONT]
         log.info(f"loaded {len(self.fonts)} fonts, default: \"{self.default.name}\"")
 
     def __repr__(self):

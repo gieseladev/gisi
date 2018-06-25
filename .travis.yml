@@ -10,16 +10,18 @@ services:
 addons:
   apt:
     packages:
-    - firefox
-    - time
+    - google-chrome-stable
+    - curl
     - unzip
 
 before_install:
-  - >
-    wget https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz &&
-    tar -xvzf geckodriver* &&
-    chmod +x geckodriver &&
-    sudo mv geckodriver /usr/local/bin/
+  - CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
+    mkdir -p /opt/chromedriver-"$CHROMEDRIVER_VERSION" && \
+    curl -sS -o /tmp/chromedriver_linux64.zip http://chromedriver.storage.googleapis.com/"$CHROMEDRIVER_VERSION"/chromedriver_linux64.zip && \
+    unzip -qq /tmp/chromedriver_linux64.zip -d /opt/chromedriver-"$CHROMEDRIVER_VERSION" && \
+    rm /tmp/chromedriver_linux64.zip && \
+    chmod +x /opt/chromedriver-"$CHROMEDRIVER_VERSION"/chromedriver && \
+    ln -fs /opt/chromedriver-"$CHROMEDRIVER_VERSION"/chromedriver /usr/local/bin/chromedriver
 
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
   - echo "deb http://download.mono-project.com/repo/ubuntu wheezy/snapshots/4.8.1 main"
@@ -37,7 +39,6 @@ install:
   - pip install pycparser
   - pip install codecov
   - pip install pytest pytest-cov pytest-asyncio
-  - pip install -e .
   - pip install -r requirements.txt
 
 script:

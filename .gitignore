@@ -3,10 +3,6 @@
 .pytest_cache/
 venv/
 gh-pages/
-logs/*.log
+logs/
 
 data/config.json
-
-geckodriver.exe
-inklecate.exe
-ink-engine-runtime.dll

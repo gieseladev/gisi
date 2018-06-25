@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 from discord import Embed, File
 from discord.ext.commands import group
 
-from gisi import SetDefaults
+from gisi import set_defaults
 from gisi.constants import Colours
 from gisi.utils import EmbedPaginator, FlagConverter, add_embed, copy_embed, extract_keys, maybe_extract_keys, \
     text_utils
@@ -29,7 +29,7 @@ class Google:
     def __init__(self, bot):
         self.bot = bot
         self.aiosession = bot.aiosession
-        self.cse = CSE(self.bot.config.google_api_key, search_engine=self.bot.config.search_engine_id,
+        self.cse = CSE(self.bot.config.GOOGLE_API_KEY, search_engine=self.bot.config.SEARCH_ENGINE_ID,
                        aiosession=self.aiosession)
 
     @group(invoke_without_command=True)
@@ -91,12 +91,12 @@ class Google:
 
 
 def setup(bot):
-    SetDefaults({
-        "google_api_key": None,
-        "search_engine_id": "002017775112634544492:izg2ejvnmiq"
+    set_defaults({
+        "GOOGLE_API_KEY": None,
+        "SEARCH_ENGINE_ID": "002017775112634544492:izg2ejvnmiq"
     })
-    if not bot.config.google_api_key:
-        log.error("No google api key found in config (key: \"google_api_key\"). Can't initialise cog!")
+    if not bot.config.GOOGLE_API_KEY:
+        log.error("No google api key found in config (key: \"GOOGLE_API_KEY\"). Can't initialise cog!")
         return
     bot.add_cog(Google(bot))
 
@@ -203,7 +203,7 @@ class CSEImageResult(CSEResult):
         im = Image.new("RGB", (2 * horizontal_padding + line_width, im_height), (35, 39, 42))
 
         current_y = vertical_padding
-        for spaced_width, width, images in lines:
+        for _, width, images in lines:
             x = horizontal_padding
             spacing = (line_width - width) // (len(images) - 1) if len(images) > 1 else 0
             for img in images:
