@@ -117,7 +117,7 @@ class MultiDict(MutableMapping):
     def add_key(self, key, new_key):
         if new_key in self:
             raise KeyError(f"\"{new_key}\" already exists!")
-        for index, (keys, value) in enumerate(self._items):
+        for index, (keys, _) in enumerate(self._items):
             if key in keys:
                 self._items[index][0].append(new_key)
                 break

@@ -1,6 +1,6 @@
 async def post(session, content):
     """Upload content to hastebin.
-    :param session: aiohttp ClientSession to use 
+    :param session: aiohttp ClientSession to use
     :param content: content to upload
     :returns: url to post or error
     """
