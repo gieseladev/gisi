@@ -9,7 +9,6 @@ from discord import AsyncWebhookAdapter, Status, Webhook
 from discord.ext.commands import AutoShardedBot
 from motor.motor_asyncio import AsyncIOMotorClient
 from raven import Client
-from raven.conf import setup_logging
 from raven.handlers.logging import SentryHandler
 
 from .config import Config
@@ -22,9 +21,11 @@ from .utils import FontManager, WebDriver
 log = logging.getLogger(__name__)
 
 sentry_client = Client(release=Info.version)
-handler = SentryHandler(sentry_client)
-handler.setLevel(logging.ERROR)
-setup_logging(handler)
+sentry_handler = SentryHandler(sentry_client)
+sentry_handler.setLevel(logging.ERROR)
+
+for logger in [None, "gisi"]:
+    logging.getLogger(logger).addHandler(sentry_handler)
 
 
 async def before_invoke(ctx):

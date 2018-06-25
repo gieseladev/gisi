@@ -202,18 +202,24 @@ class Core:
             log.debug(f"ignoring unknown command {context.message.content}")
             return
 
-        log.error(f"Command error {context} / {exception}", exc_info=True)
+        exc_info = (type(exception), exception, exception.__traceback__)
+        log.error(f"Command error {context} / {exception}", exc_info=exc_info)
 
         if self.bot.webhook:
             ctx_em = Embed(title="Context Info", timestamp=datetime.now(), colour=Colours.ERROR_INFO,
-                           description=f"cog: **{type(context.cog).__qualname__}**\nguild: **{context.guild}**\nchannel: **{context.channel}**\nauthor: **{context.author}**")
+                           description=f"cog: **{type(context.cog).__qualname__}**\n"
+                                       f"guild: **{context.guild}**\nchannel: **{context.channel}**\n"
+                                       f"author: **{context.author}**")
+
             ctx_em.add_field(name="Message",
                              value=f"id: **{context.message.id}**\ncontent:```\n{context.message.content}```",
                              inline=False)
             args = "\n".join([f"{arg}" for arg in context.args])
             kwargs = "\n".join([f"{key}: {value}" for key, value in context.kwargs.items()])
             ctx_em.add_field(name="Command",
-                             value=f"name: **{context.command.name if context.command else context.command}**\nArgs:```\n{args}```\nKwargs:```\n{kwargs}```",
+                             value=f"name: **{context.command.name if context.command else context.command}**\n"
+                                   f"Args:```\n{args}```\n"
+                                   f"Kwargs:```\n{kwargs}```",
                              inline=False)
 
             if isinstance(exception, CommandInvokeError):
