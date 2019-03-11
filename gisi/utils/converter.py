@@ -3,8 +3,8 @@ import shlex
 from collections import Iterable
 from contextlib import suppress
 
-import validators
 from discord.ext.commands import BadArgument, Command, Converter
+from yarl import URL
 
 _default = object()
 
@@ -16,8 +16,12 @@ class UrlConverter(Converter):
         url = argument.strip("<>")
         if not re.match(self.scheme_check, url):
             url = f"http://{url}"
-        if not validators.url(url):
+
+        try:
+            URL(url)
+        except Exception:
             raise BadArgument(f"\"{url}\" isn't a valid url!")
+
         return url
 
 

@@ -3,6 +3,7 @@ import logging
 
 from discord import Embed
 from discord.embeds import EmptyEmbed
+from discord.ext import commands
 from discord.ext.commands import BadArgument, command
 from discord.ext.commands.converter import ColourConverter
 
@@ -12,7 +13,7 @@ from gisi.utils import FlagConverter, add_embed
 log = logging.getLogger(__name__)
 
 
-class Message:
+class MessageCog(commands.Cog, name="Message"):
     """Commands related to messages."""
 
     def __init__(self, bot):
@@ -77,4 +78,4 @@ class Message:
 
 
 def setup(bot):
-    bot.add_cog(Message(bot))
+    bot.add_cog(MessageCog(bot))

@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageStat
 from aiohttp import ClientSession
 from discord import Embed, File
+from discord.ext import commands
 from discord.ext.commands import command
 
 from gisi import Gisi, set_defaults
@@ -15,7 +16,7 @@ from gisi.utils import chunks, extract_keys
 log = logging.getLogger(__name__)
 
 
-class WolframAlpha:
+class WolframAlphaCog(commands.Cog, name="WolframAlpha"):
     """WolframAlpha is pretty cool.
 
     What do you mean that doesn't suffice as a description?
@@ -64,7 +65,7 @@ def setup(bot):
     set_defaults({
         "WOLFRAM_APP_ID": "EH8PUT-35T4RK4AVL"
     })
-    bot.add_cog(WolframAlpha(bot))
+    bot.add_cog(WolframAlphaCog(bot))
 
 
 class Client:
@@ -259,7 +260,7 @@ class Pod:
 
 
 class SubPod:
-    def __init__(self, title, text, img, imagesource=None, nodata=False, states=None, **kwargs):
+    def __init__(self, title, text, img, imagesource=None, nodata=False, states=None, **_):
         self.title = title
         self.text = text
         self.img = img

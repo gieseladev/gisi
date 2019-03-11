@@ -5,27 +5,17 @@ import os
 import time
 
 from aiohttp import ClientSession
-from discord import AsyncWebhookAdapter, Status, Webhook
+from discord import Status
 from discord.ext.commands import AutoShardedBot
 from motor.motor_asyncio import AsyncIOMotorClient
-from raven import Client
-from raven.handlers.logging import SentryHandler
 
 from .config import Config
 from .constants import FileLocations, Info
-from .core import Core
+from .core import CoreCog
 from .signals import GisiSignal
-from .stats import Statistics
-from .utils import FontManager, WebDriver
+from .utils import FontManager
 
 log = logging.getLogger(__name__)
-
-sentry_client = Client(release=Info.version)
-sentry_handler = SentryHandler(sentry_client)
-sentry_handler.setLevel(logging.ERROR)
-
-for logger in [None, "gisi"]:
-    logging.getLogger(logger).addHandler(sentry_handler)
 
 
 async def before_invoke(ctx):
@@ -52,13 +42,9 @@ class Gisi(AutoShardedBot):
         self.aiosession = ClientSession(headers={
             "User-Agent": f"{Info.name}/{Info.version}"
         }, loop=self.loop)
-        self.webdriver = WebDriver(kill_on_exit=False)
-        self.webhook = Webhook.from_url(self.config.WEBHOOK_URL, adapter=AsyncWebhookAdapter(self.aiosession)) if self.config.WEBHOOK_URL else None
 
-        self.statistics = Statistics(self)
-        self.add_cog(self.statistics)
         self.fonts = FontManager(self)
-        self.add_cog(Core(self))
+        self.add_cog(CoreCog(self))
 
         self.unloaded_extensions = []
         self.load_exts()
@@ -158,10 +144,8 @@ class Gisi(AutoShardedBot):
 
     async def on_ready(self):
         await self.change_presence(status=Status.idle, afk=True)
-        await self.webdriver.spawn()
         log.info("ready!")
 
     async def on_logout(self):
         log.debug("closing sessions")
         await self.aiosession.close()
-        self.webdriver.close()

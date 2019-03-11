@@ -17,11 +17,9 @@ class Defaults:
     MONGO_URI = MUST_SET
     MONGO_DATABASE = "Gisi"
 
-    WEBHOOK_URL = None
+    CHROME_WS = None
 
     DEFAULT_FONT = "arial"
-
-    SEND_STATS_INTERVAL = 60 * 60
 
 
 def set_defaults(defaults: dict):
@@ -60,12 +58,22 @@ class Config:
             json.dump(self.config, f)
         log.info("saved config")
 
+    def _get_from_env(self, key: str) -> Any:
+        raw_value = os.environ[key]
+
+        try:
+            return literal_eval(raw_value)
+        except (SyntaxError, ValueError):
+            pass
+
+        return literal_eval(f"\"{raw_value}\"")
+
     def get(self, key: str) -> Any:
         try:
             return self.config[key]
         except KeyError:
             try:
-                return literal_eval(os.environ[key])
+                return self._get_from_env(key)
             except (KeyError, SyntaxError):
                 default = getattr(Defaults, key)
                 if default == MUST_SET:

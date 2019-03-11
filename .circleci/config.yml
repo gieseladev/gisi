@@ -1,0 +1,75 @@
+version: 2.1
+
+
+orbs:
+  docker-publish: circleci/docker-publish@0.1.4
+
+
+references:
+  dep_cache_key: &dep_cache_key
+                   deps-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+
+  dep_change_perms: &dep_change_perms
+    run: |
+      sudo chown -R circleci:circleci /usr/local/bin
+      sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
+
+  restore_dependencies: &restore_dependencies
+    restore_cache:
+      key: *dep_cache_key
+
+  install_dependencies: &install_dependencies
+    run:
+      name: Installing Dependencies
+      command: |
+        sudo pip install pipenv
+        pipenv install --dev --deploy
+
+
+jobs:
+  install:
+    docker:
+      - image: circleci/python:3.7
+
+    steps:
+      - checkout
+      - *dep_change_perms
+      - *restore_dependencies
+      - *install_dependencies
+      - save_cache:
+          key: *dep_cache_key
+          paths:
+            - ".venv"
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.7/site-packages"
+
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - install
+      - docker-publish/publish:
+          image: $DOCKER_IMAGE
+          tag: latest
+          requires:
+            - install
+          filters:
+            branches:
+              only: master
+
+  publish-commit-image:
+    jobs:
+      - docker-publish/publish:
+          image: $DOCKER_IMAGE
+
+  publish-tag-image:
+    jobs:
+      - docker-publish/publish:
+          image: $DOCKER_IMAGE
+          tag: $CIRCLE_TAG
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/

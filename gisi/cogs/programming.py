@@ -5,6 +5,7 @@ import textwrap
 import traceback
 
 from discord import Embed
+from discord.ext import commands
 from discord.ext.commands import command
 
 from gisi.constants import Colours
@@ -13,7 +14,7 @@ from gisi.utils import hastebin, text_utils
 log = logging.getLogger(__name__)
 
 
-class Programming:
+class ProgrammingCog(commands.Cog, name="Programming"):
     """Programming for the cool kids"""
 
     def __init__(self, bot):
@@ -103,7 +104,7 @@ class Programming:
 
 
 def setup(bot):
-    bot.add_cog(Programming(bot))
+    bot.add_cog(ProgrammingCog(bot))
 
 
 class BeautyFormatter(json.JSONEncoder):

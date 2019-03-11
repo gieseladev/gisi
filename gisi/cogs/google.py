@@ -3,10 +3,12 @@ import logging
 import random
 import urllib.parse
 from io import BytesIO
+from typing import Type, TypeVar
 
 from PIL import Image
 from aiohttp import ClientSession
 from discord import Embed, File
+from discord.ext import commands
 from discord.ext.commands import group
 
 from gisi import set_defaults
@@ -17,7 +19,7 @@ from gisi.utils import EmbedPaginator, FlagConverter, add_embed, copy_embed, ext
 log = logging.getLogger(__name__)
 
 
-class Google:
+class GoogleDraw(commands.Cog, name="Google"):
     """Google is always there for you.
 
     Just like Gisi!
@@ -98,7 +100,11 @@ def setup(bot):
     if not bot.config.GOOGLE_API_KEY:
         log.error("No google api key found in config (key: \"GOOGLE_API_KEY\"). Can't initialise cog!")
         return
-    bot.add_cog(Google(bot))
+
+    bot.add_cog(GoogleDraw(bot))
+
+
+RT = TypeVar("RT")
 
 
 class CSE:
@@ -128,14 +134,14 @@ class CSE:
 
         return params
 
-    async def search(self, query, cls=None, **kwargs):
+    async def search(self, query, cls: Type[RT] = None, **kwargs) -> RT:
         cls = cls or CSEResult
         params = self.build_params(query, **kwargs)
         async with self.aiosession.get(self.SEARCH_ENDPOINT, params=params) as resp:
             data = await resp.json()
         return cls.parse(query, data)
 
-    async def search_images(self, query, **kwargs):
+    async def search_images(self, query, **kwargs) -> "CSEImageResult":
         return await self.search(query, cls=CSEImageResult, search_type="image", **kwargs)
 
 

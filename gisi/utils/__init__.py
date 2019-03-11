@@ -1,4 +1,4 @@
-from .browser import WebDriver
+from .browser import get_browser
 from .converter import FlagConverter, UrlConverter
 from .dict import JsonObject, MultiDict, extract_keys, maybe_extract_keys
 from .embed import EmbedPaginator, add_embed, copy_embed

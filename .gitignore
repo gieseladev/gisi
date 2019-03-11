@@ -1,7 +1,9 @@
-*.pyc
 .idea/
 .pytest_cache/
-venv/
 gh-pages/
+venv/
 
+*.pyc
+
+.env
 data/config.json

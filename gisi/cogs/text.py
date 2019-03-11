@@ -9,6 +9,7 @@ from collections import namedtuple
 
 import pymongo.errors
 from discord import Embed
+from discord.ext import commands
 from discord.ext.commands import group
 
 from gisi import set_defaults
@@ -29,7 +30,7 @@ COMPLEX_REPLACER_TESTS = [
 ]
 
 
-class Text:
+class TextCog(commands.Cog, name="Text"):
     """Convert -name- into asciimojis!
 
     Because you can never have enough emojis in your life! ヽ༼ຈل͜ຈ༽ﾉ
@@ -40,8 +41,9 @@ class Text:
         self.replacers = bot.mongo_db.replacers
         self.cached_replacers = {}
 
+    @commands.Cog.listener()
     async def on_ready(self):
-        collections = await self.bot.mongo_db.collection_names()
+        collections = await self.bot.mongo_db.list_collection_names()
         await self.replacers.create_index("triggers", name="triggers", unique=True)
         if "replacers" not in collections:
             log.debug("replacer collection not found, uploading default")
@@ -284,10 +286,12 @@ class Text:
             if new_content != message.content:
                 await message.edit(content=new_content)
 
+    @commands.Cog.listener()
     async def on_message(self, message):
         await self.handle_message(message)
 
-    async def on_message_edit(self, before, after):
+    @commands.Cog.listener()
+    async def on_message_edit(self, _, after):
         await self.handle_message(after)
 
 
@@ -295,7 +299,7 @@ def setup(bot):
     set_defaults({
         "replacer_enabled": True
     })
-    bot.add_cog(Text(bot))
+    bot.add_cog(TextCog(bot))
 
 
 ComplexReplacer = namedtuple("ComplexReplacer", ("version", "get"))

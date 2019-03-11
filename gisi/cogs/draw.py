@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from discord import File, User
+from discord.ext import commands
 from discord.ext.commands import ColourConverter, group
 from wordcloud import ImageColorGenerator, WordCloud
 
@@ -29,7 +30,7 @@ SAMPLE_SENTENCES = (
 )
 
 
-class Draw:
+class DrawCog(commands.Cog, name="Draw"):
     """You can draw but so can Gisi!"""
 
     def __init__(self, bot: Gisi):
@@ -153,11 +154,11 @@ class Draw:
                 text_font = ImageFont.truetype(font=loc, size=16)
                 sample = random.choice(SAMPLE_SENTENCES)
 
-                n_width, n_height = Draw.get_size(name, title_font)
+                n_width, n_height = DrawCog.get_size(name, title_font)
                 n_height += TITLE_SPACING
                 samples.append((name, (114, 137, 218), title_font, n_height))
 
-                t_width, t_height = Draw.get_size(sample, text_font)
+                t_width, t_height = DrawCog.get_size(sample, text_font)
                 t_height += LINE_SPACING
                 samples.append((sample, "white", text_font, t_height))
 
@@ -215,7 +216,7 @@ class Draw:
             colour = "white"
 
         font = ImageFont.truetype(font=font, size=40)
-        text_width, text_height = Draw.get_size(text, font)
+        text_width, text_height = DrawCog.get_size(text, font)
         margin = 10
 
         im = await self.get_image(flags.get("b", None))
@@ -377,4 +378,4 @@ class Draw:
 
 
 def setup(bot):
-    bot.add_cog(Draw(bot))
+    bot.add_cog(DrawCog(bot))

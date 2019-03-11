@@ -8,6 +8,7 @@ from typing import Any, Callable, Optional
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from discord import Embed
+from discord.ext import commands
 from discord.ext.commands import Context, command
 
 from gisi import Gisi
@@ -15,7 +16,7 @@ from gisi.constants import Colours
 from gisi.utils import EmbedPaginator, FlagConverter, JsonObject, add_embed, text_utils
 
 
-class Wikipedia:
+class WikipediaCog(commands.Cog, name="Wikipedia"):
     """Need I really say more?"""
 
     def __init__(self, bot: Gisi):
@@ -52,7 +53,7 @@ class Wikipedia:
 
 
 def setup(bot: Gisi):
-    bot.add_cog(Wikipedia(bot))
+    bot.add_cog(WikipediaCog(bot))
 
 
 class WikipediaException(Exception):

@@ -2,7 +2,7 @@ class Info:
     name = "Gisi"
     desc = "A *cough* tiny Discord self-bot"
 
-    version = "2018.06.25-2120"
+    version = "2019.03.11-1605"
     version_name = "Corta"
     release = "alpha"
 
@@ -10,11 +10,8 @@ class Info:
 class FileLocations:
     CONFIG = "data/config.json"
 
-    WEBDRIVER_LOG = "logs/webdriver.log"
-
     COGS = "gisi/cogs"
     FONTS = "data/fonts"
-    EVENTORY = "data/eventory"
 
 
 class Colours:

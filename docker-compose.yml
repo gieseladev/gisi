@@ -3,7 +3,7 @@ version: "3"
 services:
   gisi:
     container_name: Gisi
-    image: siku2/gisi
+    image: giesela/gisi
     build: .
     restart: always
     volumes:
@@ -13,8 +13,8 @@ services:
       - backend
     environment:
       - TOKEN
-      - MONGO_URI
-      - WEBHOOK_URL
+      - MONGO_URI=mongodb://mongodb:27017
+      - CHROME_WS=ws://browserless:3000
       - GOOGLE_API_KEY
       - SENTRY_DSN
   mongodb:
@@ -24,8 +24,20 @@ services:
     networks:
       - backend
     volumes:
-      - db:/data/db
-      - db:/data/configdb
+      - db:/data
+
+  browserless:
+    container_name: Browserless
+    image: browserless/chrome
+    restart: always
+    networks:
+      - backend
+    expose:
+      - 3000
+    environment:
+      - MAX_CONCURRENT_SESSIONS=2
+      - MAX_QUEUE_LENGTH=3
+      - CONNECTION_TIMEOUT=120000
 
 volumes:
   db: {}

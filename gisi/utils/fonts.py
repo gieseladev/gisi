@@ -4,6 +4,7 @@ import os
 import random
 from collections import namedtuple
 from os import path
+from typing import List
 
 import aiohttp
 from PIL import ImageFont
@@ -71,7 +72,7 @@ class FontManager:
 
     @staticmethod
     def load_fonts(directory=FileLocations.FONTS):
-        files = os.listdir(directory)
+        files: List[str] = os.listdir(directory)
         fonts = {}
         for file in files:
             location = f"{directory}/{file}"

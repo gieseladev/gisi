@@ -1,5 +1,6 @@
 import logging
 
+from discord.ext import commands
 from discord.ext.commands import group
 
 from gisi import set_defaults
@@ -7,7 +8,7 @@ from gisi import set_defaults
 log = logging.getLogger(__name__)
 
 
-class Grammar:
+class GrammarCog(commands.Cog, name="Grammar"):
     """For all the grammar nazis out there."""
 
     def __init__(self, bot):
@@ -70,6 +71,7 @@ class Grammar:
         self.bot.config.grammar_check_enabled = False
         await ctx.message.edit(content=f"{ctx.message.content} (disabled)")
 
+    @commands.Cog.listener()
     async def on_message(self, message):
         if message.author != self.bot.user:
             return
@@ -81,4 +83,4 @@ def setup(bot):
     set_defaults({
         "grammar_check_enabled": False
     })
-    bot.add_cog(Grammar(bot))
+    bot.add_cog(GrammarCog(bot))
