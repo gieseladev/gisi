@@ -108,5 +108,5 @@ class Changelog:
 
 async def get_changelog(session):
     async with session.get(Sources.GISI_VERSION_LOG) as resp:
-        data = await resp.json()
+        data = await resp.json(content_type=None)
     return Changelog.parse(data)
