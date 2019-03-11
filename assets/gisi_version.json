@@ -1,9 +1,14 @@
 {
   "current_version": {
-    "version": "2018.06.25-2120",
+    "version": "2019.03.11-1605",
     "name": "Corta"
   },
   "history": [
+    {
+      "version": "2019.03.11-1605",
+      "type": "MINOR_FEATURE",
+      "change": "Bringing Gisi back up to speed. Includes "
+    },
     {
       "version": "2018.06.25-2120",
       "type": "BUGFIX",
